@@ -93,6 +93,7 @@
     "uglify-js": "^2.4.11"
   },
   "dependencies": {
+    "axios": "^0.17.1",
     "babel-polyfill": "*",
     "browserify-zlib-next": "^1.0.1",
     "classnames": "^2.2.5",

@@ -4,6 +4,7 @@ import { Ships } from 'coriolis-data/dist';
 import cn from 'classnames';
 import Page from './Page';
 import Router from '../Router';
+import Axios from 'axios';
 import Persist from '../stores/Persist';
 import * as Utils from '../utils/UtilityFunctions';
 import Ship from '../shipyard/Ship';
@@ -70,20 +71,25 @@ export default class OutfittingPage extends Page {
     let params = context.route.params;
     let shipId = params.ship;
     let code = params.code;
+    let remoteID = params.remote;
     let buildName = params.bn;
     let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
     let savedCode = Persist.getBuild(shipId, buildName);
 
-    if (!data) {
-      return { error: { message: 'Ship not found: ' + shipId } };
-    }
-
-    let ship = new Ship(shipId, data.properties, data.slots);          // Create a new Ship instance
-
-    if (code) {
-      ship.buildFrom(code);  // Populate modules from serialized 'code' URL param
+    if (remoteID) {
+      Axios.get('https://orbis.zone/api/ships/' + remoteID + '/fdev')
     } else {
-      ship.buildWith(data.defaults);  // Populate with default components
+      if (!data) {
+        return { error: { message: 'Ship not found: ' + shipId } };
+      }
+
+      let ship = new Ship(shipId, data.properties, data.slots);          // Create a new Ship instance
+
+      if (code) {
+        ship.buildFrom(code);  // Populate modules from serialized 'code' URL param
+      } else {
+        ship.buildWith(data.defaults);  // Populate with default components
+      }
     }
 
     this._getTitle = getTitle.bind(this, data.properties.name);
