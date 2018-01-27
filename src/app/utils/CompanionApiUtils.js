@@ -6,7 +6,7 @@ import { getBlueprint } from '../utils/BlueprintFunctions';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 
 // mapping from fd's ship model names to coriolis'
-const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
+export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'Adder': 'adder',
   'Anaconda': 'anaconda',
   'Asp': 'asp',
@@ -50,7 +50,6 @@ const HARDPOINT_NUM_TO_CLASS = {
   3: 'Large',
   4: 'Huge'
 };
-
 
 /**
  * Obtain a module given its ED ID

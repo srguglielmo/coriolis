@@ -10,6 +10,7 @@ import * as Utils from '../utils/UtilityFunctions';
 import Ship from '../shipyard/Ship';
 import { toDetailedBuild } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
+import { SHIP_FD_NAME_TO_CORIOLIS_NAME } from '../utils/CompanionApiUtils';
 import { FloppyDisk, Bin, Switch, Download, Reload, LinkIcon, ShoppingIcon } from '../components/SvgIcons';
 import LZString from 'lz-string';
 import ShipSummaryTable from '../components/ShipSummaryTable';
@@ -69,16 +70,56 @@ export default class OutfittingPage extends Page {
    */
   _initState(props, context) {
     let params = context.route.params;
-    let shipId = params.ship;
-    let code = params.code;
     let remoteID = params.remote;
-    let buildName = params.bn;
-    let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
-    let savedCode = Persist.getBuild(shipId, buildName);
 
-    if (remoteID) {
+    if (remoteID) { // Remote instance, fetch data.
       Axios.get('https://orbis.zone/api/ships/' + remoteID + '/fdev')
+        .then((response) => {
+          let remote = response.data;
+
+          let shipId = SHIP_FD_NAME_TO_CORIOLIS_NAME[remote.Ship];
+          let data = Ships[shipId];
+
+          if (!data) {
+            return { error: { message: 'Ship not found: ' + shipId } };
+          }
+
+          let ship = new Ship(shipId, data.properties, data.slots);
+          ship.buildFromLoadout(remote.Modules);
+
+          this._getTitle = getTitle.bind(this, data.properties.name);
+
+          const { sys, eng, wep, boost, fuel, cargo, opponent, opponentBuild, opponentSys, opponentEng, opponentWep, engagementRange } = this._obtainControlFromCode(ship);
+          return {
+            error: null,
+            title: this._getTitle(buildName),
+            costTab: Persist.getCostTab() || 'costs',
+            shipId,
+            ship,
+            sys,
+            eng,
+            wep,
+            boost,
+            fuel,
+            cargo,
+            opponent,
+            opponentBuild,
+            opponentSys,
+            opponentEng,
+            opponentWep,
+            engagementRange
+          }; 
+        })
+        .catch((err) => {
+          return { error: { message: 'Issue communicating with remote server'}};
+        })
     } else {
+      let shipId = params.ship;
+      let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
+      let savedCode = Persist.getBuild(shipId, buildName);
+      let code = params.code;
+      let buildName = params.bn;
+
       if (!data) {
         return { error: { message: 'Ship not found: ' + shipId } };
       }
@@ -90,35 +131,34 @@ export default class OutfittingPage extends Page {
       } else {
         ship.buildWith(data.defaults);  // Populate with default components
       }
+      this._getTitle = getTitle.bind(this, data.properties.name);
+
+      // Obtain ship control from code
+      const { sys, eng, wep, boost, fuel, cargo, opponent, opponentBuild, opponentSys, opponentEng, opponentWep, engagementRange } = this._obtainControlFromCode(ship, code);
+      return {
+        error: null,
+        title: this._getTitle(buildName),
+        costTab: Persist.getCostTab() || 'costs',
+        buildName,
+        newBuildName: buildName,
+        shipId,
+        ship,
+        code,
+        savedCode,
+        sys,
+        eng,
+        wep,
+        boost,
+        fuel,
+        cargo,
+        opponent,
+        opponentBuild,
+        opponentSys,
+        opponentEng,
+        opponentWep,
+        engagementRange
+      };
     }
-
-    this._getTitle = getTitle.bind(this, data.properties.name);
-
-    // Obtain ship control from code
-    const { sys, eng, wep, boost, fuel, cargo, opponent, opponentBuild, opponentSys, opponentEng, opponentWep, engagementRange } = this._obtainControlFromCode(ship, code);
-    return {
-      error: null,
-      title: this._getTitle(buildName),
-      costTab: Persist.getCostTab() || 'costs',
-      buildName,
-      newBuildName: buildName,
-      shipId,
-      ship,
-      code,
-      savedCode,
-      sys,
-      eng,
-      wep,
-      boost,
-      fuel,
-      cargo,
-      opponent,
-      opponentBuild,
-      opponentSys,
-      opponentEng,
-      opponentWep,
-      engagementRange
-    };
   }
 
   /**
