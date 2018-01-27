@@ -785,6 +785,14 @@ export default class Ship {
     );
   };
 
+  buildFromLoadout(Modules) {
+    let internal = this.internal,
+        standard = this.standard,
+        hps = this.hardpoints,
+        cl = standard.length,
+        i, l;
+  }
+
   /**
    * Empties all hardpoints and utility slots
    * @return {this} The current ship instance for chaining

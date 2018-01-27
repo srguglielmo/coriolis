@@ -73,9 +73,10 @@ export default class OutfittingPage extends Page {
     let remoteID = params.remote;
 
     if (remoteID) { // Remote instance, fetch data.
-      Axios.get('https://orbis.zone/api/ships/' + remoteID + '/fdev')
+      Axios.get('http://127.0.0.1:8081/api/ships/' + remoteID + '/fdev')
         .then((response) => {
           let remote = response.data;
+          let buildName = params.bn;
 
           let shipId = SHIP_FD_NAME_TO_CORIOLIS_NAME[remote.Ship];
           let data = Ships[shipId];
@@ -94,6 +95,8 @@ export default class OutfittingPage extends Page {
             error: null,
             title: this._getTitle(buildName),
             costTab: Persist.getCostTab() || 'costs',
+            buildName,
+            newBuildName: buildName,
             shipId,
             ship,
             sys,
@@ -108,10 +111,10 @@ export default class OutfittingPage extends Page {
             opponentEng,
             opponentWep,
             engagementRange
-          }; 
+          };
         })
         .catch((err) => {
-          return { error: { message: 'Issue communicating with remote server'}};
+          this.state = { error: { message: 'Issue communicating with remote server'}};
         })
     } else {
       let shipId = params.ship;
