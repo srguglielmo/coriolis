@@ -275,6 +275,7 @@
     "totalCost": 882362060,
     "unladenMass": 1179.2,
     "totalDps": 29,
+    "passengerCapacity": 0,
     "powerAvailable": 36,
     "powerRetracted": 23.33,
     "powerDeployed": 34.76,
