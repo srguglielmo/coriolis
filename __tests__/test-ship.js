@@ -3,32 +3,31 @@ import { Ships } from 'coriolis-data/dist';
 import * as ModuleUtils from '../src/app/shipyard/ModuleUtils';
 
 describe("Ship", function() {
-
-  it("can build all ships", function() {
-    for (let s in Ships) {
+  for (let s in Ships) {
+    it("can build " + s, function() {
       let shipData = Ships[s];
       let ship = new Ship(s, shipData.properties, shipData.slots);
 
       for (let p in shipData.properties) {
-        expect(ship[p]).toEqual(shipData.properties[p], s + ' property [' + p + '] does not match when built');
+        expect(ship[p]).toEqual(shipData.properties[p]);
       }
 
       ship.buildWith(shipData.defaults);
 
-      expect(ship.totalCost).toEqual(shipData.retailCost, s + ' retail cost does not match default build cost');
+      expect(ship.totalCost).toEqual(shipData.retailCost);
       expect(ship.cargoCapacity).toBeDefined();
-      expect(ship.priorityBands[0].retracted).toBeGreaterThan(0, s + ' priorityBands');
-      expect(ship.powerAvailable).toBeGreaterThan(0, s + ' powerAvailable');
-      expect(ship.unladenRange).toBeGreaterThan(0, s + ' unladenRange');
-      expect(ship.ladenRange).toBeGreaterThan(0, s + ' ladenRange');
-      expect(ship.fuelCapacity).toBeGreaterThan(0, s + ' fuelCapacity');
-      expect(ship.unladenFastestRange).toBeGreaterThan(0, s + ' unladenFastestRange');
-      expect(ship.ladenFastestRange).toBeGreaterThan(0, s + ' ladenFastestRange');
-      expect(ship.shield).toBeGreaterThan(0, s + ' shield');
-      expect(ship.armour).toBeGreaterThan(0, s + ' armour');
-      expect(ship.topSpeed).toBeGreaterThan(0, s + ' topSpeed');
-    }
-  });
+      expect(ship.priorityBands[0].retracted).toBeGreaterThan(0);
+      expect(ship.powerAvailable).toBeGreaterThan(0);
+      expect(ship.unladenRange).toBeGreaterThan(0);
+      expect(ship.ladenRange).toBeGreaterThan(0);
+      expect(ship.fuelCapacity).toBeGreaterThan(0);
+      expect(ship.unladenFastestRange).toBeGreaterThan(0);
+      expect(ship.ladenFastestRange).toBeGreaterThan(0);
+      expect(ship.shield).toBeGreaterThan(0);
+      expect(ship.armour).toBeGreaterThan(0);
+      expect(ship.topSpeed).toBeGreaterThan(0);
+    });
+  }
 
   it("resets and rebuilds properly", function() {
     var id = 'cobra_mk_iii';
