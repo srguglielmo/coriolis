@@ -258,11 +258,6 @@
           "type":         "integer",
           "minimum":      1
         },
-        "fullTankRange": {
-          "description":  "Single Jump range with a full tank (unladenMass + fuel)",
-          "type":         "number",
-          "minimum":      0
-        },
         "ladenMass": {
           "description":  "Mass of the Ship + fuel + cargo (hull + all components + fuel tank + cargo capacity)",
           "type":         "number",
