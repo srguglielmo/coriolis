@@ -10,31 +10,29 @@ let ls = {};
 
 // Implment mock localStorage
 let localStorage = {
-  getItem: function(key) {
+  getItem: (key) => {
     return ls[key];
   },
-  setItem: function(key, value) {
+  setItem: (key, value) => {
     ls[key] = value;
   },
-  removeItem: function(key) {
+  removeItem: (key) => {
     delete ls[key];
   },
-  clear: function() {
+  clear: () => {
     ls = {};
   }
-}
+};
 
 window.addEventListener = function(eventName, listener) {
-
   if(eventName == 'storage') {
     storageListener = listener; // Keep track of latest storage listener
   } else {
     origAddEventListener.apply(arguments);
   }
-}
+};
 
 describe('Persist', function() {
-
   const Persist = require('../src/app/stores/Persist').Persist;
 
   describe('Multi tab/window', function() {
@@ -140,4 +138,4 @@ describe('Persist', function() {
       expect(backup.comparisons).toEqual({});
     });
   });
-})
+});
