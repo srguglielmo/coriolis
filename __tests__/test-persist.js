@@ -6,23 +6,53 @@ import TU from 'react-testutils-additions';
 
 let origAddEventListener = window.addEventListener;
 let storageListener;
-let ls = {};
 
-// Implment mock localStorage
-let localStorage = {
-  getItem: (key) => {
-    return ls[key];
-  },
-  setItem: (key, value) => {
-    ls[key] = value;
-  },
-  removeItem: (key) => {
-    delete ls[key];
-  },
-  clear: () => {
-    ls = {};
+/**
+ * Mock local storage
+ */
+class LocalStorage {
+  /**
+   * Sets up storage variable
+   */
+  constructor() {
+    this.ls = {};
   }
-};
+
+  /**
+   * Retrieves a value from local storage
+   * @param {String} key Storage key
+   * @return {*} Storage value
+   */
+  getItem(key) {
+    return this.ls[key];
+  }
+
+  /**
+   * Writes a value to local storage
+   * @param {String} key Storage key
+   * @param {*} value Storage value
+   */
+  setItem(key, value) {
+    this.ls[key] = value;
+  }
+
+  /**
+   * Clears a value from local storage
+   * @param {String} key Storage key
+   */
+  removeItem(key) {
+    delete this.ls[key];
+  }
+
+  /**
+   * Clears local storage
+   */
+  clear() {
+    this.ls = {};
+  }
+}
+
+const LOCAL_STORAGE = new LocalStorage();
 
 window.addEventListener = function(eventName, listener) {
   if(eventName == 'storage') {
@@ -38,7 +68,8 @@ describe('Persist', function() {
   describe('Multi tab/window', function() {
     it("syncs builds", function() {
       window.localStorage = localStorage;
-      ls = {};
+      localStorage.clear();
+
       let p = new Persist();
       let newBuilds = {
         anaconda: { test: '1234' }
@@ -52,7 +83,8 @@ describe('Persist', function() {
   describe('General and Settings', function() {
     it("has defaults", function() {
       window.localStorage = localStorage;
-      ls = {};
+      localStorage.clear();
+
       let p = new Persist();
       expect(p.getLangCode()).toBe('en');
       expect(p.showTooltips()).toBe(true);
@@ -63,14 +95,14 @@ describe('Persist', function() {
     });
 
     it("loads from localStorage correctly", function() {
-      window.localStorage = localStorage;
+      window.localStorage = LOCAL_STORAGE;
       let savedData = require('./fixtures/valid-backup');
-      ls = {};
-      ls.builds = JSON.stringify(savedData.builds);
-      ls.NG_TRANSLATE_LANG_KEY = 'de';
-      ls.insurance = 'Standard';
-      ls.shipDiscount = 0.25;
-      ls.moduleDiscount = 0.15;
+      LOCAL_STORAGE.clear();
+      LOCAL_STORAGE.setItem('builds', JSON.stringify(savedData.builds));
+      LOCAL_STORAGE.setItem('NG_TRANSLATE_LANG_KEY', 'de');
+      LOCAL_STORAGE.setItem('insurance', 'Standard');
+      LOCAL_STORAGE.setItem('shipDiscount', 0.25);
+      LOCAL_STORAGE.setItem('moduleDiscount', 0.15);
       let p = new Persist();
 
       expect(p.getInsurance()).toBe('standard');
@@ -84,13 +116,13 @@ describe('Persist', function() {
     });
 
     it("uses defaults from a corrupted localStorage", function() {
-      window.localStorage = localStorage;
-      ls = {};
-      ls.builds = "not valid json";
-      ls.comparisons = "1, 3, 4";
-      ls.insurance = 'this insurance does not exist';
-      ls.shipDiscount = 'this is not a number';
-      ls.moduleDiscount = 10; // Way to big
+      window.localStorage = LOCAL_STORAGE;
+      LOCAL_STORAGE.clear();
+      LOCAL_STORAGE.setItem('builds', 'not valid json');
+      LOCAL_STORAGE.setItem('comparisons', '1, 3, 4');
+      LOCAL_STORAGE.setItem('insurance', 'this insurance does not exist');
+      LOCAL_STORAGE.setItem('shipDiscount', 'this is not a number');
+      LOCAL_STORAGE.setItem('moduleDiscount', 10); // Way to big
 
       let p = new Persist();
       expect(p.getLangCode()).toBe('en');
@@ -120,13 +152,13 @@ describe('Persist', function() {
     });
 
     it("generates the backup", function() {
-      window.localStorage = localStorage;
+      window.localStorage = LOCAL_STORAGE;
       let savedData = require('./fixtures/valid-backup');
-      ls = {};
-      ls.builds = JSON.stringify(savedData.builds);
-      ls.insurance = 'Beta';
-      ls.shipDiscount = 0.25;
-      ls.moduleDiscount = 0.15;
+      LOCAL_STORAGE.clear();
+      LOCAL_STORAGE.setItem('builds', JSON.stringify(savedData.builds));
+      LOCAL_STORAGE.setItem('insurance', 'Beta');
+      LOCAL_STORAGE.setItem('shipDiscount', 0.25);
+      LOCAL_STORAGE.setItem('moduleDiscount', 0.15);
 
       let p = new Persist();
       let backup = p.getAll();
