@@ -1,6 +1,13 @@
+// Check whether a test is run because then we need to
+// initialize ReactGA in test mode
+let isTest = false;
+try {
+  isTest = process.env.node_env === 'test';
+} catch (e) {}
+
 import Persist from './stores/Persist';
 import ReactGA from 'react-ga';
-ReactGA.initialize('UA-55840909-18');
+ReactGA.initialize('UA-55840909-18', { testMode: isTest });
 let standalone = undefined;
 
 /**
