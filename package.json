@@ -122,6 +122,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
+    "@nozbe/watermelondb": "^0.6.2",
     "browserify-zlib-next": "^1.0.1",
     "classnames": "^2.2.6",
     "coriolis-data": "../coriolis-data",
