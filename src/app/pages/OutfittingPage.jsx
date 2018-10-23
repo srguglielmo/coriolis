@@ -38,6 +38,7 @@ import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
 import ModalOrbis from '../components/ModalOrbis';
+import { autoBind } from 'react-extras';
 
 /**
  * Document Title Generator
@@ -62,14 +63,7 @@ export default class OutfittingPage extends Page {
     super(props, context);
     // window.Perf = Perf;
     this.state = this._initState(props, context);
-    this._keyDown = this._keyDown.bind(this);
-    this._exportBuild = this._exportBuild.bind(this);
-    this._pipsUpdated = this._pipsUpdated.bind(this);
-    this._boostUpdated = this._boostUpdated.bind(this);
-    this._cargoUpdated = this._cargoUpdated.bind(this);
-    this._fuelUpdated = this._fuelUpdated.bind(this);
-    this._opponentUpdated = this._opponentUpdated.bind(this);
-    this._engagementRangeUpdated = this._engagementRangeUpdated.bind(this);
+    autoBind(this);
     this._sectionMenuRefs = {};
   }
 
@@ -83,9 +77,9 @@ export default class OutfittingPage extends Page {
     let params = context.route.params;
     let shipId = params.ship;
     let code = params.code;
+    let savedCode = code;
     let buildName = params.bn;
     let data = Ships[shipId]; // Retrieve the basic ship properties, slots and defaults
-    let savedCode = Persist.getBuild(shipId, buildName);
     if (!data) {
       return { error: { message: 'Ship not found: ' + shipId } };
     }
@@ -142,6 +136,13 @@ export default class OutfittingPage extends Page {
       opponentWep,
       engagementRange
     };
+  }
+
+  async getBuild() {
+    const build = await Persist.getBuild(this.state.shipId, this.state.buildName);
+    if (build) {
+      this.setState({id: build.id, savedCode: build.code})
+    }
   }
 
   /**
@@ -417,13 +418,14 @@ export default class OutfittingPage extends Page {
   /**
    * Save the current build
    */
-  _saveBuild() {
-    const { ship, buildName, newBuildName, shipId } = this.state;
-
+  async _saveBuild() {
+    const { ship, buildName, newBuildName, shipId, id } = this.state;
+    this.getBuild();
     // If this is a stock ship the code won't be set, so ensure that we have it
     const code = this.state.code || ship.toString();
 
-    Persist.saveBuild(shipId, newBuildName, code);
+    const yes = await Persist.saveBuild(id, newBuildName, code, shipId);
+    console.log(yes)
     this._updateRoute(shipId, newBuildName, code);
 
     let opponent, opponentBuild, opponentSys, opponentEng, opponentWep;
@@ -660,6 +662,7 @@ export default class OutfittingPage extends Page {
    * Add listeners when about to mount
    */
   componentWillMount() {
+    this.getBuild()
     document.addEventListener('keydown', this._keyDown);
   }
 

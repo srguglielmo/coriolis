@@ -29,7 +29,14 @@ module.exports = {
   output: {
     path: path.join(__dirname, 'build'),
     filename: 'app.js',
+    globalObject: 'this',
     publicPath: '/'
+  },
+  node: {
+    fs: 'empty',
+    net: 'empty',
+    tls: 'empty',
+    'crypto': 'empty'
   },
   plugins: [
     new CopyWebpackPlugin(['src/.htaccess']),
@@ -56,8 +63,12 @@ module.exports = {
   module: {
     rules: [
       { test: /\.css$/, loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader' }) },
-      { test: /\.less$/, loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader!less-loader' }) },
+      {
+        test: /\.less$/,
+        loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader!less-loader' })
+      },
       { test: /\.(js|jsx)$/, loaders: ['babel-loader'], include: path.join(__dirname, 'src') },
+      { test: /\.worker\.js$/, use: { loader: 'worker-loader' } },
       { test: /\.woff(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
       { test: /\.woff2(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/font-woff' },
       { test: /\.ttf(\?v=\d+\.\d+\.\d+)?$/, loader: 'url-loader?limit=10000&mimetype=application/octet-stream' },

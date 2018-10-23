@@ -1,5 +1,7 @@
 import { EventEmitter } from 'fbemitter';
 import { Insurance } from '../shipyard/Constants';
+import { buildsCollection, database } from '../model';
+import {Q} from '@nozbe/watermelondb';
 
 const LS_KEY_BUILDS = 'builds';
 const LS_KEY_COMPARISONS = 'comparisons';
@@ -81,7 +83,7 @@ export class Persist extends EventEmitter {
       localStorage.setItem('test', 'test');
       localStorage.removeItem('test');
       LS = localStorage;
-    } catch(e) {
+    } catch (e) {
       LS = null;
     }
 
@@ -105,7 +107,7 @@ export class Persist extends EventEmitter {
     this.comparisons = comparisonJson && typeof comparisonJson == 'object' ? comparisonJson : {};
     this.costTab = _getString(LS_KEY_COST_TAB);
     this.outfittingTab = _getString(LS_KEY_OUTFITTING_TAB);
-    this.state =  _get(LS_KEY_STATE);
+    this.state = _get(LS_KEY_STATE);
     this.sizeRatio = _get(LS_KEY_SIZE_RATIO) || 1;
     this.matsPerGrade = matsPerGrade || {
       1: 2,
@@ -132,7 +134,7 @@ export class Persist extends EventEmitter {
     let newValue = e.newValue;
 
     try {
-      switch(e.key) {
+      switch (e.key) {
         case LS_KEY_BUILDS:
           this.builds = newValue ? JSON.parse(newValue) : {};
           this.emit('builds');
@@ -249,17 +251,27 @@ export class Persist extends EventEmitter {
   /**
    * Persist a ship build in local storage.
    *
-   * @param  {String} shipId The unique id for a model of ship
+   * @param {String} id The unique id for the ship or ''
+   * @param  {String} shipId The coriolis ship id
    * @param  {String} name   The name of the build
    * @param  {String} code   The serialized code
    */
-  saveBuild(shipId, name, code) {
-    if (!this.builds[shipId]) {
-      this.builds[shipId] = {};
+  async saveBuild(id, name, code, shipId) {
+    if (id) {
+      const build = await buildsCollection.find(id);
+      if (build) {
+        return build.update(newBuild => {
+          newBuild.title = name;
+          newBuild.body = code;
+        });
+      }
     }
-    this.builds[shipId][name] = code;
-    _put(LS_KEY_BUILDS, this.builds);
-    this.emit('builds');
+
+    return await buildsCollection.create(build => {
+      build.title = name;
+      build.ship_id = shipId;
+      build.body = code;
+    });
   }
 
   /**
@@ -270,11 +282,10 @@ export class Persist extends EventEmitter {
    * @param  {String} name   The name of the build
    * @return {String}        The serialized build string.
    */
-  getBuild(shipId, name) {
-    if (this.builds[shipId] && this.builds[shipId][name]) {
-      return this.builds[shipId][name];
-    }
-    return null;
+  async getBuild(shipId, name) {
+    const build = await buildsCollection.query(Q.where('ship_id', shipId), Q.where('title', name)).fetch();
+    console.log(build);
+    return build;
   }
 
   /**
@@ -283,7 +294,7 @@ export class Persist extends EventEmitter {
    * @return {Object | Array} Object if Ship Id is not provided
    */
   getBuilds(shipId) {
-    if(shipId && shipId.length > 0) {
+    if (shipId && shipId.length > 0) {
       return this.builds[shipId];
     }
     return this.builds;
@@ -362,7 +373,9 @@ export class Persist extends EventEmitter {
     }
     this.comparisons[name] = {
       facets,
-      builds: builds.map(b => { return { shipId: b.id || b.shipId, buildName: b.buildName }; })
+      builds: builds.map(b => {
+        return { shipId: b.id || b.shipId, buildName: b.buildName };
+      })
     };
     _put(LS_KEY_COMPARISONS, this.comparisons);
     this.emit('comparisons');
@@ -505,6 +518,7 @@ export class Persist extends EventEmitter {
     _put(LS_KEY_ROLLS, this.matsPerGrade);
     this.emit('matsPerGrade');
   }
+
   /**
    * Get the saved Mats per grade
    * @return {Object} # of rolls per grade
@@ -556,6 +570,7 @@ export class Persist extends EventEmitter {
     this.outfittingTab = tabName;
     _put(LS_KEY_OUTFITTING_TAB, tabName);
   }
+
   /**
    * Get the current outfitting tab
    * @return {string} the current outfitting tab

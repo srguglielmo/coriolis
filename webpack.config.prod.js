@@ -22,6 +22,7 @@ module.exports = {
     publicPath: '/',
     globalObject: 'this'
   },
+  node: { fs: 'empty' },
   mode: 'production',
   optimization: {
     minimize: true,
@@ -53,13 +54,14 @@ module.exports = {
     //   appVersion: `${pkgJson.version}-${buildDate.toISOString()}`
     // }),
     new InjectManifest({
-      swSrc: './src/sw.js',
+      swSrc: './src/app/sw.js',
       importWorkboxFrom: 'cdn',
       swDest: 'service-worker.js'
     }),
   ],
   module: {
     rules: [
+      {test: /\.worker\.js$/, use: {loader: 'worker-loader'}},
       { test: /\.css$/, loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader' }) },
       { test: /\.less$/, loader: ExtractTextPlugin.extract({ fallback: 'style-loader', use: 'css-loader!less-loader' }) },
       { test: /\.(js|jsx)$/, loader: 'babel-loader?cacheDirectory=true', include: path.join(__dirname, 'src') },
