@@ -29,7 +29,7 @@ services:
     - "traefik.basic.port=80"
     - "traefik.basic.protocol=http"
 
-    coriolis_dw2:
+  coriolis_dw2:
     image: edcd/coriolis:dw2
     restart: always
     volumes:
