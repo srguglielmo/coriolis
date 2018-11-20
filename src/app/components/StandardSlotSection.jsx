@@ -20,16 +20,25 @@ export default class StandardSlotSection extends SlotSection {
     super(props, context, 'standard', 'core internal');
     this._optimizeStandard = this._optimizeStandard.bind(this);
     this._selectBulkhead = this._selectBulkhead.bind(this);
+    this._showDW2Menu = this._showDW2Menu.bind(this);
+    this._dw2 = this._dw2.bind(this);
     this.selectedRefId = null;
     this.firstRefId = 'maxjump';
-    this.lastRefId = 'racer';
+    this.lastRefId = 'dw2';
+    this.state = {
+      showDW2: false,
+      DW2Tier: -1,
+      DW2Eng: -1,
+      DW2Role: ''
+    };
   }
+
   /**
    * Handle focus if the component updates
    * @param {Object} prevProps React Component properties
    */
   componentDidUpdate(prevProps) {
-    this._handleSectionFocus(prevProps,this.firstRefId, this.lastRefId);
+    this._handleSectionFocus(prevProps, this.firstRefId, this.lastRefId);
   }
 
   /**
@@ -70,6 +79,91 @@ export default class StandardSlotSection extends SlotSection {
     this.props.onCargoChange(this.props.ship.cargoCapacity);
     this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
+  }
+
+  /**
+   * DW2 Build
+   * @param tier
+   * @param engineeringLevel
+   * @param role
+   */
+  _dw2() {
+    this.selectedRefId = 'dw2';
+    this.setState({ showDW2: false });
+    ShipRoles.dw2Build(this.props.ship, this.state.DW2Tier, this.state.DW2Eng, this.state.DW2Role);
+    this.props.ship.updateModificationsString()
+    this.props.onChange();
+    this.props.onCargoChange(this.props.ship.cargoCapacity);
+    this.props.onFuelChange(this.props.ship.fuelCapacity);
+    this._close();
+  }
+
+  _showDW2Menu(translate) {
+    return (
+      <div className='select' onClick={(e) => e.stopPropagation()} onContextMenu={stopCtxPropagation}>
+        <div className='select-group cap'>{translate('Tier')}</div>
+        <ul id={'tier'}>
+          <li className={cn({ active: this.state.DW2Tier === 1 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Tier: 1 })} onKeyDown={this._keyDown}
+          >{translate('1- Hardcore exploration, fully maximize jump range')}</li>
+          <li className={cn({ active: this.state.DW2Tier === 2 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Tier: 2 })} onKeyDown={this._keyDown}
+          >{translate('2- Classical shielded exploration')}</li>
+          <li className={cn({ active: this.state.DW2Tier === 3 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Tier: 3 })} onKeyDown={this._keyDown}
+          >{translate('3- Surface exploration, improved shield')}</li>
+          <li className={cn({ active: this.state.DW2Tier === 4 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Tier: 4 })} onKeyDown={this._keyDown}
+          >{translate('4- Surface flight, improved shield and thrusters')}</li>
+        </ul>
+        <hr/>
+        <div className='select-group cap'>{translate('Engineering Level')}</div>
+        <ul id={'engLevel'}>
+          <li className={cn({ active: this.state.DW2Eng === 1 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Eng: 1 })} onKeyDown={this._keyDown}
+          >{translate('No engineering')}</li>
+          <li className={cn({ active: this.state.DW2Eng === 2 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Eng: 2 })} onKeyDown={this._keyDown}
+          >{translate('Only Felicity Farseer and Elvira Martuuk')}</li>
+          <li className={cn({ active: this.state.DW2Eng === 3 }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Eng: 3 })} onKeyDown={this._keyDown}
+          >{translate('All exploration related engineers')}</li>
+        </ul>
+        <hr/>
+        <div className='select-group cap'>{translate('Role')}</div>
+        <ul id={'role'}>
+          <li className={cn({ active: this.state.DW2Role === 'exploration' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'exploration' })}
+              onKeyDown={this._keyDown}
+          >{translate('Exploration')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'surface' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'surface' })}
+              onKeyDown={this._keyDown}
+          >{translate('Surface exploration')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'fullmining' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'fullmining' })}
+              onKeyDown={this._keyDown}
+          >{translate('Big Rig, full mining')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'prospector' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'prospector' })}
+              onKeyDown={this._keyDown}
+          >{translate('Saper / Prospector mining')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'rat' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'rat' })} onKeyDown={this._keyDown}
+          >{translate('Fuel rat')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'repair' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'repair' })} onKeyDown={this._keyDown}
+          >{translate('Repair rat')}</li>
+        </ul>
+        <hr/>
+        <ul>
+          <li onClick={this._dw2} className={cn('lc')} tabIndex="0"
+              onKeyDown={this._keyDown}>
+            <button className="button">Apply</button>
+          </li>
+        </ul>
+      </div>
+    );
   }
 
   /**
@@ -232,7 +326,7 @@ export default class StandardSlotSection extends SlotSection {
       selected={currentMenu == st[6]}
       onChange={this.props.onChange}
       ship={ship}
-      warning= {m => m.fuel < st[2].m.maxfuel}  // Show warning when fuel tank is smaller than FSD Max Fuel
+      warning={m => m.fuel < st[2].m.maxfuel}  // Show warning when fuel tank is smaller than FSD Max Fuel
     />;
 
     return slots;
@@ -245,19 +339,34 @@ export default class StandardSlotSection extends SlotSection {
    */
   _getSectionMenu(translate) {
     let planetaryDisabled = this.props.ship.internal.length < 4;
+    if (this.state.showDW2 === true) {
+      return this._showDW2Menu(translate);
+    }
     return <div className='select' onClick={(e) => e.stopPropagation()} onContextMenu={stopCtxPropagation}>
       <ul>
-        <li className='lc' tabIndex="0" onClick={this._optimizeStandard} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['maxjump'] = smRef}>{translate('Maximize Jump Range')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeStandard} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['maxjump'] = smRef}>{translate('Maximize Jump Range')}</li>
       </ul>
       <div className='select-group cap'>{translate('roles')}</div>
       <ul>
-        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, false, 0)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['multipurpose'] = smRef}>{translate('Multi-purpose')}</li>
-        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, true, 2)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['combat'] = smRef}>{translate('Combat')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeCargo.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['trader'] = smRef}>{translate('Trader')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeExplorer.bind(this, false)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['explorer'] = smRef}>{translate('Explorer')}</li>
-        <li className={cn('lc', { disabled:  planetaryDisabled })} tabIndex={planetaryDisabled ? '' : '0'} onClick={!planetaryDisabled && this._optimizeExplorer.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['planetary'] = smRef}>{translate('Planetary Explorer')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeMiner.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['miner'] = smRef}>{translate('Miner')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeRacer.bind(this)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['racer'] = smRef}>{translate('Racer')}</li>
+        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, false, 0)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['multipurpose'] = smRef}>{translate('Multi-purpose')}</li>
+        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, true, 2)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['combat'] = smRef}>{translate('Combat')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeCargo.bind(this, true)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['trader'] = smRef}>{translate('Trader')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeExplorer.bind(this, false)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['explorer'] = smRef}>{translate('Explorer')}</li>
+        <li className={cn('lc', { disabled: planetaryDisabled })} tabIndex={planetaryDisabled ? '' : '0'}
+            onClick={!planetaryDisabled && this._optimizeExplorer.bind(this, true)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['planetary'] = smRef}>{translate('Planetary Explorer')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeMiner.bind(this, true)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['miner'] = smRef}>{translate('Miner')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeRacer.bind(this)} onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['racer'] = smRef}>{translate('Racer')}</li>
+        <li className='lc' tabIndex="0" onClick={() => this.setState({ showDW2: !this.state.showDW2 })}
+            onKeyDown={this._keyDown}
+            ref={smRef => this.sectionRefArr['dw2'] = smRef}>{translate('DW2')}</li>
       </ul>
     </div>;
   }

@@ -1,5 +1,8 @@
 import * as ModuleUtils from './ModuleUtils';
+import {Modifications} from 'coriolis-data/dist';
 import { canMount } from '../utils/SlotFunctions';
+import { getBlueprint, setPercent } from '../utils/BlueprintFunctions';
+
 
 /**
  * Standard / typical role for multi-purpose or combat (if shielded with better bulkheads)
@@ -14,7 +17,7 @@ export function multiPurpose(ship, shielded, bulkheadIndex) {
     .useBulkhead(bulkheadIndex);
 
   if (shielded) {
-    ship.internal.some(function(slot) {
+    ship.internal.some(function (slot) {
       if (canMount(ship, slot, 'sg')) { // Assuming largest slot can hold an eligible shield
         ship.use(slot, ModuleUtils.findInternal('sg', slot.maxClass, 'A'));
         ship.setSlotEnabled(slot, true);
@@ -22,6 +25,96 @@ export function multiPurpose(ship, shielded, bulkheadIndex) {
       }
     });
   }
+}
+
+/**
+ * Distant Worlds 2 role
+ * Tiers:
+ * 1- Hardcore exploration, fully maximize jump range
+ * 2- Classical shielded exploration
+ * 3- Surface exploration, improved shield
+ * 4- Surface flight, improved shield and thrusters
+ *
+ * Engineering level:
+ * No engineering
+ * Only Felicity Farseer and Elvira Martuuk
+ * All exploration related engineers
+ *
+ * Role
+ * Exploration
+ * Surface exploration
+ * Big Rig, full mining
+ * Saper / Prospector mining
+ * Fuel rat
+ * Repair rat
+ *
+ * @param ship {Ship} Ship instance
+ * @param tier {Number}
+ * @param engineeringLevel {Number}
+ * @param role {String}
+ */
+export function dw2Build(ship, tier, engineeringLevel, role) {
+  let standardOpts = { ppRating: 'D', pd: 'd3' };
+  ship
+  .emptyInternal()
+  .emptyHardpoints()
+  .emptyUtility();
+  ship.use(ship.standard[2], ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A'))
+  ship.use(ship.standard[3], ModuleUtils.findStandard('ls', ship.standard[3].maxClass, 'D'))
+  ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'))
+  ship.use(ship.standard[5], ModuleUtils.findStandard('s', ship.standard[5].maxClass, 'D'))
+  const fuelNeeded = ship.standard[2].m.maxfuel * 2;
+  const fuelTank = ship.availCS.standard[6]
+    .filter(e => e.fuel)
+    .filter(e => e.fuel >= fuelNeeded)
+  ship.use(ship.standard[6], fuelTank[0])
+
+  if (engineeringLevel === 2) {
+    const bp = getBlueprint('FSD_LongRange', ship.standard[2]);
+    bp.grade = 5
+    bp.special = Modifications.specials['special_fsd_heavy']
+    ship.standard[2].m.blueprint = bp;
+    setPercent(ship, ship.standard[2].m, 100);
+  } else if (engineeringLevel === 3) {
+    // Armour G5 HD + Deep Plating
+    const armourBP = getBlueprint('Armour_HeavyDuty', ship.bulkheads);
+    armourBP.grade = 5
+    armourBP.special = Modifications.specials['special_armour_chunky']
+    ship.bulkheads.m.blueprint = armourBP;
+    setPercent(ship, ship.bulkheads.m, 100);
+    // FSD G5 IR + Mass Manager
+    const fsdBP = getBlueprint('FSD_LongRange', ship.standard[2]);
+    fsdBP.grade = 5
+    fsdBP.special = Modifications.specials['special_fsd_heavy']
+    ship.standard[2].m.blueprint = fsdBP;
+    setPercent(ship, ship.standard[2].m, 100);
+    // LS G4 LW
+    const lsBP = getBlueprint('LifeSupport_LightWeight', ship.standard[3]);
+    lsBP.grade = 4
+    ship.standard[3].m.blueprint = lsBP;
+    setPercent(ship, ship.standard[3].m, 100);
+    // Sensors G5 LW
+    const sBP = getBlueprint('Sensor_Sensor_LightWeight', ship.standard[5]);
+    sBP.grade = 5
+    ship.standard[5].m.blueprint = sBP;
+    setPercent(ship, ship.standard[5].m, 100);
+  }
+  ship.useBulkhead(0, false);
+  ship.use(ship.standard[0], ship.availCS.lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'D'))
+
+  // ship.useLightestStandard(standardOpts);
+  ship.updatePowerGenerated()
+      .updatePowerUsed()
+      .recalculateMass()
+      .updateJumpStats()
+      .recalculateShield()
+      .recalculateShieldCells()
+      .recalculateArmour()
+      .recalculateDps()
+      .recalculateEps()
+      .recalculateHps()
+      .updateMovement()
+      .updateModificationsString();
 }
 
 /**
@@ -45,7 +138,7 @@ export function trader(ship, shielded, standardOpts) {
     .filter(a => (!a.eligible) || a.eligible.sg)
     .filter(a => a.maxClass >= sg.class)
     .sort((a, b) => shieldOrder.indexOf(a.maxClass) - shieldOrder.indexOf(b.maxClass));
-  shieldInternals.some(function(slot) {
+  shieldInternals.some(function (slot) {
     if (canMount(ship, slot, 'sg')) { // Assuming largest slot can hold an eligible shield
       const shield = ModuleUtils.findInternal('sg', slot.maxClass, 'A');
       if (shield && shield.maxmass > ship.hullMass) {
@@ -87,11 +180,11 @@ export function trader(ship, shielded, standardOpts) {
  */
 export function explorer(ship, planetary) {
   let standardOpts = { ppRating: 'A' },
-      heatSinkCount = 2,  // Fit 2 heat sinks if possible
-      usedSlots = [],
-      sgSlot,
-      fuelScoopSlot,
-      sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
+    heatSinkCount = 2,  // Fit 2 heat sinks if possible
+    usedSlots = [],
+    sgSlot,
+    fuelScoopSlot,
+    sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
 
   if (!planetary) { // Non-planetary explorers don't really need to boost
     standardOpts.pd = '1D';
@@ -216,9 +309,9 @@ export function explorer(ship, planetary) {
 export function miner(ship, shielded) {
   shielded = true;
   let standardOpts = { ppRating: 'A' },
-      miningLaserCount = 2,
-      usedSlots = [],
-      sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
+    miningLaserCount = 2,
+    usedSlots = [],
+    sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
 
   // Cargo hatch should be enabled
   ship.setSlotEnabled(ship.cargoHatch, true);
@@ -269,7 +362,7 @@ export function miner(ship, shielded) {
 
   // Dual mining lasers of highest possible class; remove anything else
   const miningLaserOrder = [2, 3, 4, 1, 0];
-  const miningLaserHardpoints = ship.hardpoints.concat().sort(function(a, b) {
+  const miningLaserHardpoints = ship.hardpoints.concat().sort(function (a, b) {
     return miningLaserOrder.indexOf(a.maxClass) - miningLaserOrder.indexOf(b.maxClass);
   });
   for (let s of miningLaserHardpoints) {
@@ -283,7 +376,7 @@ export function miner(ship, shielded) {
 
   // Number of collector limpets required to be active is a function of the size of the ship and the power of the lasers
   const miningLaserDps = ship.hardpoints.filter(h => h.m != null)
-    .reduce(function(a, b) {
+    .reduce(function (a, b) {
       return a + b.m.getDps();
     }, 0);
   // Find out how many internal slots we have, and their potential cargo size
@@ -314,7 +407,7 @@ export function miner(ship, shielded) {
 
   // Power distributor to power the mining lasers indefinitely
   const wepRateRequired = ship.hardpoints.filter(h => h.m != null)
-    .reduce(function(a, b) {
+    .reduce(function (a, b) {
       return a + b.m.getEps();
     }, 0);
   standardOpts.pd = ship.getAvailableModules().matchingPowerDist({ weprate: wepRateRequired }).id;
@@ -336,9 +429,9 @@ export function miner(ship, shielded) {
  */
 export function racer(ship) {
   let standardOpts = {},
-      usedSlots = [],
-      sgSlot,
-      sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
+    usedSlots = [],
+    sgSlot,
+    sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
 
   // Cargo hatch can be disabled
   ship.setSlotEnabled(ship.cargoHatch, false);
