@@ -105,7 +105,7 @@ function orbisShorten(url, success, error) {
   }
 }
 
-const API_ORBIS = 'https://orbis.zone/api/builds/add';
+export const API_ORBIS_BASE_URL = process.env.NODE_ENV === 'development' ? 'http://localhost:3030' : 'https://orbis.zone';
 /**
  * Upload to Orbis
  * @param  {object} ship        The URL to shorten
@@ -117,7 +117,7 @@ export function orbisUpload(ship, creds) {
     if (window.navigator.onLine) {
       try {
         agent
-          .post(API_ORBIS)
+          .post(`${API_ORBIS_BASE_URL}/api/builds/add`)
           .withCredentials()
           .redirects(0)
           .set('Content-Type', 'application/json')

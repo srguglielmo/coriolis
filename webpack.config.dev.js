@@ -22,9 +22,6 @@ module.exports = {
   },
   optimization: {
     minimize: false,
-    splitChunks: {
-      chunks: 'all'
-    }
   },
   output: {
     path: path.join(__dirname, 'build'),

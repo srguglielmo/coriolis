@@ -682,7 +682,32 @@ export default class OutfittingPage extends Page {
    */
   _genOrbis() {
     const data = {};
+    const {Ship, Module, Factory} = require('ed-forge');
+    const forgeShip = Factory.newShip(this.state.ship.id);
+    console.log(forgeShip);
     const ship = this.state.ship;
+    const forgeOrder = {
+      0: 'bh',
+      1: 'pp',
+      2: 't',
+      3: 'fsd',
+      4: 'ls',
+      5: 'pd',
+      6: 's',
+      7: 'ft'
+    }
+    ship.standard.forEach((standard, idx) => {
+      console.log(standard)
+      const mod = Factory.newModule(standard.m.symbol, standard.m.class.toString(), standard.m.rating.toString());
+      console.log(mod);
+      const coreIdx = Object.entries(forgeOrder).findIndex(e => e[1] === standard.m.grp);
+      console.log(coreIdx)
+      console.log(forgeShip.getCoreModules())
+      forgeShip.getCoreModules()[coreIdx].setItem(standard.m.symbol);
+      if (standard.m.blueprint) {
+        console.log(standard.m.blueprint)
+      }
+    });
     ship.coriolisId = ship.id;
     data.coriolisShip = ship;
     data.url = window.location.href;

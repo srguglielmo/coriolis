@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
-import { orbisUpload } from '../utils/ShortenUrl';
+import { orbisUpload, API_ORBIS_BASE_URL } from '../utils/ShortenUrl';
 import Persist from '../stores/Persist';
 
 /**
@@ -52,7 +52,7 @@ export default class ModalOrbis extends TranslatedComponent {
    * @returns {Object} auth status
    */
   getOrbisAuthStatus() {
-    return fetch('https://orbis.zone/api/checkauth', {
+    return fetch(`${API_ORBIS_BASE_URL}/api/checkauth`, {
       credentials: 'include',
       mode: 'cors'
     })
@@ -104,7 +104,7 @@ export default class ModalOrbis extends TranslatedComponent {
       <label>Orbis auth status: </label>
       <input value={this.state.authenticatedStatus} readOnly size={25} onFocus={ (e) => e.target.select() }/>
       <br/><br/>
-      <a className='button' href="https://orbis.zone/api/auth">Log in / signup to Orbis</a>
+      <a className='button' href={`${API_ORBIS_BASE_URL}/api/checkauth`}>Log in / signup to Orbis</a>
       <br/><br/>
       <h3 >{translate('Orbis link')}</h3>
       <input value={this.state.orbisUrl} readOnly size={25} onFocus={ (e) => e.target.select() }/>
