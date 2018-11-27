@@ -1502,7 +1502,7 @@ export default class Ship {
               buffer.writeInt32LE(slotMod.value, curpos);
             }
             const modification = _.find(Modifications.modifications, function(o) { return o.id === slotMod.id; });
-            console.log('ENCODE Slot ' + i + ': ' + modification.name + ' = ' + slotMod.value);
+            // console.log('ENCODE Slot ' + i + ': ' + modification.name + ' = ' + slotMod.value);
             curpos += 4;
           }
           buffer.writeInt8(MODIFICATION_ID_DONE, curpos++);
@@ -1514,7 +1514,7 @@ export default class Ship {
       }
 
       this.serialized.modifications = zlib.gzipSync(buffer).toString('base64');
-      console.log(this.serialized.modifications)
+      // console.log(this.serialized.modifications)
     } else {
       this.serialized.modifications = null;
     }
@@ -1557,7 +1557,7 @@ export default class Ship {
           blueprint.special = _.find(Modifications.specials, function(o) { return o.id === modificationValue; });
         } else {
           const modification = _.find(Modifications.modifications, function(o) { return o.id === modificationId; });
-          console.log('DECODE Slot ' + slot + ': ' + modification.name + ' = ' + modificationValue);
+          // console.log('DECODE Slot ' + slot + ': ' + modification.name + ' = ' + modificationValue);
           modifications[modification.name] = modificationValue;
         }
         modificationId = buffer.readInt8(curpos++);

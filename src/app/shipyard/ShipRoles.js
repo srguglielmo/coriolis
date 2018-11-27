@@ -53,13 +53,14 @@ export function multiPurpose(ship, shielded, bulkheadIndex) {
  * @param engineeringLevel {Number}
  * @param role {String}
  */
-export function dw2Build(ship, tier, engineeringLevel, role) {
+export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter) {
   let standardOpts = { ppRating: 'D', pd: 'd3' };
   ship
   .emptyInternal()
   .emptyHardpoints()
   .emptyUtility();
-  ship.use(ship.standard[2], ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A'))
+  const fsd = ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A');
+  ship.use(ship.standard[2], fsd)
   ship.use(ship.standard[3], ModuleUtils.findStandard('ls', ship.standard[3].maxClass, 'D'))
   ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'))
   ship.use(ship.standard[5], ModuleUtils.findStandard('s', ship.standard[5].maxClass, 'D'))
@@ -68,13 +69,18 @@ export function dw2Build(ship, tier, engineeringLevel, role) {
     .filter(e => e.fuel)
     .filter(e => e.fuel >= fuelNeeded)
   ship.use(ship.standard[6], fuelTank[0])
-
+  ship.useBulkhead(0, false);
   if (engineeringLevel === 2) {
     const bp = getBlueprint('FSD_LongRange', ship.standard[2]);
     bp.grade = 5
     bp.special = Modifications.specials['special_fsd_heavy']
     ship.standard[2].m.blueprint = bp;
     setPercent(ship, ship.standard[2].m, 100);
+    // Sensors G3 LW
+    const sBP = getBlueprint('Sensor_Sensor_LightWeight', ship.standard[5]);
+    sBP.grade = 3
+    ship.standard[5].m.blueprint = sBP;
+    setPercent(ship, ship.standard[5].m, 100);
   } else if (engineeringLevel === 3) {
     // Armour G5 HD + Deep Plating
     const armourBP = getBlueprint('Armour_HeavyDuty', ship.bulkheads);
@@ -99,7 +105,105 @@ export function dw2Build(ship, tier, engineeringLevel, role) {
     ship.standard[5].m.blueprint = sBP;
     setPercent(ship, ship.standard[5].m, 100);
   }
-  ship.useBulkhead(0, false);
+
+  if (ship.id === 'alliance_chieftain' || ship.id === 'imperial_clipper') {
+    const fs = ModuleUtils.findInternal('fs', 4, 'A');
+    const slot = ship.internal.filter(a => a.maxClass === 4)[0];
+    ship.use(slot, fs);
+  } else if (ship.id === 'imperial_cutter') {
+    const fs = ModuleUtils.findInternal('fs', 6, 'A');
+    const slot = ship.internal.filter(a => a.maxClass === 6)[0];
+    ship.use(slot, fs);
+  } else if (fsd.class === 2 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 2, 'A');
+    const slot = ship.internal.filter(a => a.maxClass >= 2)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 1, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 1)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  } else if (fsd.class === 3 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 3, 'B');
+    const slot = ship.internal.filter(a => a.maxClass >= 3)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 2, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 2)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  } else if (fsd.class === 4 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 4, 'b');
+    const slot = ship.internal.filter(a => a.maxClass >= 4)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 3, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 3)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  } else if (fsd.class === 5 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 5, 'B');
+    const slot = ship.internal.filter(a => a.maxClass >= 5)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 4, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 4)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  } else if (fsd.class === 6 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 6, 'B');
+    const slot = ship.internal.filter(a => a.maxClass >= 6)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 5, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 5)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  } else if (fsd.class === 7 && fsd.rating === 'A') {
+    let fs = ModuleUtils.findInternal('fs', 7, 'B');
+    let slot = ship.internal.filter(a => a.maxClass >= 7)[0];
+    if (slot.m) {
+      fs =  ModuleUtils.findInternal('fs', 6, 'A');
+      slot = ship.internal.filter(a => a.maxClass === 6)[0];
+      ship.use(slot, fs);
+    } else {
+      ship.use(slot, fs);
+    }
+  }
+
+  if (tier !== 1) {
+    const fuelNeeded = ship.standard[2].m.maxfuel * 3;
+    const fuelTank = ship.availCS.standard[6]
+    .filter(e => e.fuel)
+    .filter(e => e.fuel >= fuelNeeded)
+    ship.use(ship.standard[6], fuelTank[0])
+  }
+
+  if (tier === 2) {
+    if (ship.id === 'alliance_chieftain' || ship.id === 'alliance_crusader' || ship.id === 'federal_gunship' || ship.id === 'vulture') {
+      const hrp = ModuleUtils.findInternal('hrp', 3, 'D');
+      const slot = ship.internal.filter(e => e.eligible && e.maxClass === 3);
+      ship.use(slot, hrp);
+    } else {
+      // const shieldOrder = [1, 2, 3, 4, 5, 6, 7, 8].reverse();
+      // const shieldInternals = ship.internal.filter(a => !a.m)
+      // .filter(a => (!a.eligible) || a.eligible.sg)
+      // .filter(a => a.maxClass >= sg.class)
+      // .sort((a, b) => shieldOrder.indexOf(a.maxClass) - shieldOrder.indexOf(b.maxClass));
+      // for (let i = 0; i < shieldInternals.length; i++) {
+      //   if (canMount(ship, shieldInternals[i], 'sg')) {
+      //     ship.use(shieldInternals[i], sg);
+      //     break;
+      //   }
+      // }
+    }
+  }
+
   ship.use(ship.standard[0], ship.availCS.lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'D'))
 
   // ship.useLightestStandard(standardOpts);

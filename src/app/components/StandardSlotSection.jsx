@@ -29,7 +29,10 @@ export default class StandardSlotSection extends SlotSection {
       showDW2: false,
       DW2Tier: -1,
       DW2Eng: -1,
-      DW2Role: ''
+      DW2Role: '',
+      DW2Gfsb: false,
+      DW2Gpp: false,
+      DW2Fighter: false
     };
   }
 
@@ -90,7 +93,7 @@ export default class StandardSlotSection extends SlotSection {
   _dw2() {
     this.selectedRefId = 'dw2';
     this.setState({ showDW2: false });
-    ShipRoles.dw2Build(this.props.ship, this.state.DW2Tier, this.state.DW2Eng, this.state.DW2Role);
+    ShipRoles.dw2Build(this.props.ship, this.state.DW2Tier, this.state.DW2Eng, this.state.DW2Role, this.state.DW2Gfsb, this.state.DW2Gpp, this.state.DW2Fighter);
     this.props.ship.updateModificationsString()
     this.props.onChange();
     this.props.onCargoChange(this.props.ship.cargoCapacity);
@@ -154,6 +157,25 @@ export default class StandardSlotSection extends SlotSection {
           <li className={cn({ active: this.state.DW2Role === 'repair' }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Role: 'repair' })} onKeyDown={this._keyDown}
           >{translate('Repair rat')}</li>
+        </ul>
+        <hr/>
+        <ul>
+        <li className={cn({ active: this.state.DW2Gfsb === true }, 'lc')}
+        onClick={() => this.setState({ DW2Gfsb: this.state.DW2Gfsb === true ? false : true })}>
+          Add Guardian FSD Booster
+          </li>
+        </ul>
+        <ul>
+        <li className={cn({ active: this.state.DW2Gpp === true }, 'lc')}
+        onClick={() => this.setState({ DW2Gpp: this.state.DW2Gpp === true ? false : true })}>
+          Add Guardian Power Plant
+          </li>
+        </ul>
+        <ul>
+        <li className={cn({ active: this.state.DW2Fighter === true }, 'lc')}
+        onClick={() => this.setState({ DW2Fighter: this.state.DW2Fighter === true ? false : true })}>
+          Add Fighter
+          </li>
         </ul>
         <hr/>
         <ul>
