@@ -60,7 +60,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
   .emptyHardpoints()
   .emptyUtility();
   const fsd = ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A');
-  ship.use(ship.standard[2], fsd)
+  ship.use(ship.standard[2], fsd);
   ship.use(ship.standard[3], ModuleUtils.findStandard('ls', ship.standard[3].maxClass, 'D'))
   ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'))
   ship.use(ship.standard[5], ModuleUtils.findStandard('s', ship.standard[5].maxClass, 'D'))
@@ -116,7 +116,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     ship.use(slot, fs);
   } else if (fsd.class === 2 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 2, 'A');
-    const slot = ship.internal.filter(a => a.maxClass >= 2)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 2).filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 1, 'A');
       slot = ship.internal.filter(a => a.maxClass === 1)[0];
@@ -126,7 +128,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   } else if (fsd.class === 3 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 3, 'B');
-    const slot = ship.internal.filter(a => a.maxClass >= 3)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 3).filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 2, 'A');
       slot = ship.internal.filter(a => a.maxClass === 2)[0];
@@ -136,7 +140,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   } else if (fsd.class === 4 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 4, 'b');
-    const slot = ship.internal.filter(a => a.maxClass >= 4)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 4).filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 3, 'A');
       slot = ship.internal.filter(a => a.maxClass === 3)[0];
@@ -146,17 +152,24 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   } else if (fsd.class === 5 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 5, 'B');
-    const slot = ship.internal.filter(a => a.maxClass >= 5)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 5).filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 4, 'A');
-      slot = ship.internal.filter(a => a.maxClass === 4)[0];
+      slot = ship.internal.filter(a => a.maxClass === 4).filter(a => a.maxClass >= fs.class)
+        .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+        [0];
       ship.use(slot, fs);
     } else {
       ship.use(slot, fs);
     }
   } else if (fsd.class === 6 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 6, 'B');
-    const slot = ship.internal.filter(a => a.maxClass >= 6)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 6)
+      .filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 5, 'A');
       slot = ship.internal.filter(a => a.maxClass === 5)[0];
@@ -166,7 +179,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   } else if (fsd.class === 7 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 7, 'B');
-    let slot = ship.internal.filter(a => a.maxClass >= 7)[0];
+    let slot = ship.internal.filter(a => a.maxClass >= 7).filter(a => a.maxClass >= fs.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
     if (slot.m) {
       fs =  ModuleUtils.findInternal('fs', 6, 'A');
       slot = ship.internal.filter(a => a.maxClass === 6)[0];
@@ -203,7 +218,10 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       // }
     }
   }
-
+  const pp = ship.getAvailableModules().lightestPowerPlant(ship.ladenMass, 'D');
+  const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
+  ship.use(ship.standard[0], pp);
+  ship.use(ship.standard[1], t);
   ship.use(ship.standard[0], ship.availCS.lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'D'))
 
   // ship.useLightestStandard(standardOpts);
@@ -233,7 +251,7 @@ export function trader(ship, shielded, standardOpts) {
   let sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass);
   ship.useStandard('A')
     .use(ship.standard[3], ModuleUtils.standard(3, ship.standard[3].maxClass + 'D'))  // D Life Support
-    .use(ship.standard[1], ModuleUtils.standard(1, ship.standard[1].maxClass + 'D'))  // D Life Support
+    .use(ship.standard[1], ModuleUtils.standard(1, ship.standard[1].maxClass + 'D'))  // D Power Plant
     .use(ship.standard[4], ModuleUtils.standard(4, ship.standard[4].maxClass + 'D'))  // D Life Support
     .use(ship.standard[5], ModuleUtils.standard(5, ship.standard[5].maxClass + 'D'));  // D Sensors
 
