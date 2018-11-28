@@ -164,13 +164,14 @@ export default class ModuleSet {
   /**
    * Finds the lightest usable Shield Generator
    * @param  {number} hullMass  Ship hull mass
-   * @return {Object}           Thruster
+   * @param  {string} rating      The optional rating of the shield
+   * @return {Object}           Shield Generator
    */
-  lightestShieldGenerator(hullMass) {
+  lightestShieldGenerator(hullMass, rating) {
     let sg = this.internal.sg[0];
-
+    console.log(rating)
     for (let s of this.internal.sg) {
-      if (s.mass < sg.mass && s.maxmass > hullMass) {
+      if ((s.mass < sg.mass && s.maxmass > hullMass) && (!rating || rating.toString() == s.rating)) {
         sg = s;
       }
     }

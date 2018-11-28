@@ -205,6 +205,25 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       const slot = ship.internal.filter(e => e.eligible && e.maxClass === 3);
       ship.use(slot, hrp);
     } else {
+      const sg = ship.getAvailableModules().lightestShieldGenerator(ship.ladenMass);
+      const slot = ship.internal.filter(a => !a.m)
+        .filter(a => a.maxClass >= sg.class)
+        .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
+      ship.use(slot, sg);
+      if (engineeringLevel === 2) {
+        // ELP G3
+        const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
+        shieldBP.grade = 3;
+        ship.findShieldGenerator().blueprint = shieldBP;
+        setPercent(ship, ship.findShieldGenerator(), 100);
+      } else if (engineeringLevel === 3) {
+        // ELP G5
+        const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
+        shieldBP.grade = 5;
+        ship.findShieldGenerator().blueprint = shieldBP;
+        setPercent(ship, ship.findShieldGenerator(), 100);
+      }
       // const shieldOrder = [1, 2, 3, 4, 5, 6, 7, 8].reverse();
       // const shieldInternals = ship.internal.filter(a => !a.m)
       // .filter(a => (!a.eligible) || a.eligible.sg)
@@ -217,12 +236,18 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       //   }
       // }
     }
+  } else if (tier === 3 || tier === 4) {
+    const sg = ship.getAvailableModules().lightestShieldGenerator(ship.ladenMass, 'A');
+    const slot = ship.internal.filter(a => !a.m)
+      .filter(a => a.maxClass >= sg.class)
+      .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
+      [0];
+    ship.use(slot, sg);
   }
-  const pp = ship.getAvailableModules().lightestPowerPlant(ship.ladenMass, 'D');
+  const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
   const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
   ship.use(ship.standard[0], pp);
   ship.use(ship.standard[1], t);
-  ship.use(ship.standard[0], ship.availCS.lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'D'))
 
   // ship.useLightestStandard(standardOpts);
   ship.updatePowerGenerated()
