@@ -237,13 +237,54 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       // }
     }
   } else if (tier === 3 || tier === 4) {
-    const sg = ship.getAvailableModules().lightestShieldGenerator(ship.ladenMass, 'A');
+    const sg = ship.getAvailableModules().lightestShieldGenerator(ship.hullMass, 'A');
     const slot = ship.internal.filter(a => !a.m)
       .filter(a => a.maxClass >= sg.class)
       .sort((a,b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
       [0];
     ship.use(slot, sg);
+    if (engineeringLevel === 1) {
+      // ELP G3
+      const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
+      shieldBP.grade = 3;
+      shieldBP.special = Modifications.specials['special_shield_lightweight'];
+      ship.findShieldGenerator().blueprint = shieldBP;
+      setPercent(ship, ship.findShieldGenerator(), 100);
+    } else if (engineeringLevel === 2) {
+      // ELP G5
+      const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
+      shieldBP.grade = 5;
+      shieldBP.special = Modifications.specials['special_shield_lightweight'];
+      ship.findShieldGenerator().blueprint = shieldBP;
+      setPercent(ship, ship.findShieldGenerator(), 100);
+    }
   }
+
+  if (tier === 4) {
+    let t;
+    if (canMount(ship, ship.standard[1], 't', ship.standard[1].maxClass - 1)) {
+      t = ModuleUtils.findStandard('t', ship.standard[1].maxClass - 1, 'A');
+    } else {
+      t = ModuleUtils.findStandard('t', ship.standard[1].maxClass, 'A');
+    }
+    ship.use(ship.standard[1], t);
+    if (engineeringLevel === 1) {
+      // DD G3
+      const tBP = getBlueprint('Engine_Dirty', ship.standard[1]);
+      tBP.grade = 3;
+      tBP.special = Modifications.specials['special_engine_lightweight'];
+      ship.standard[1].blueprint = tBP;
+      setPercent(ship, ship.standard[1], 100);
+    } else if (engineeringLevel === 2) {
+      // DD G5
+      const tBP = getBlueprint('Engine_Dirty', ship.standard[1]);
+      tBP.grade = 5;
+      tBP.special = Modifications.specials['special_engine_lightweight'];
+      ship.standard[1].blueprint = tBP;
+      setPercent(ship, ship.standard[1], 100);
+    }
+  }
+
   const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
   const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
   ship.use(ship.standard[0], pp);

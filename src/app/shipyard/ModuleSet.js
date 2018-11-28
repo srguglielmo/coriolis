@@ -169,9 +169,8 @@ export default class ModuleSet {
    */
   lightestShieldGenerator(hullMass, rating) {
     let sg = this.internal.sg[0];
-    console.log(rating)
     for (let s of this.internal.sg) {
-      if ((s.mass < sg.mass && s.maxmass > hullMass) && (!rating || rating.toString() == s.rating)) {
+      if ((!rating || rating === s.rating) && s.mass <= sg.mass && s.maxmass > hullMass) {
         sg = s;
       }
     }
