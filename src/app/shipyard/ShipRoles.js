@@ -16,7 +16,7 @@ export function multiPurpose(ship, shielded, bulkheadIndex) {
     .useBulkhead(bulkheadIndex);
 
   if (shielded) {
-    ship.internal.some(function(slot) {
+    ship.internal.some(function (slot) {
       if (canMount(ship, slot, 'sg')) { // Assuming largest slot can hold an eligible shield
         ship.use(slot, ModuleUtils.findInternal('sg', slot.maxClass, 'A'));
         ship.setSlotEnabled(slot, true);
@@ -163,9 +163,13 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       slot = ship.internal.filter(a => a.maxClass === 4).filter(a => a.maxClass >= fs.class)
         .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
         [0];
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     } else {
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     }
   } else if (fsd.class === 6 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 6, 'B');
@@ -176,9 +180,13 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     if (slot.m) {
       fs = ModuleUtils.findInternal('fs', 5, 'A');
       slot = ship.internal.filter(a => a.maxClass === 5)[0];
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     } else {
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     }
   } else if (fsd.class === 7 && fsd.rating === 'A') {
     let fs = ModuleUtils.findInternal('fs', 7, 'B');
@@ -188,9 +196,13 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     if (slot.m) {
       fs = ModuleUtils.findInternal('fs', 6, 'A');
       slot = ship.internal.filter(a => a.maxClass === 6)[0];
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     } else {
-      ship.use(slot, fs);
+      if (fs) {
+        ship.use(slot, fs);
+      }
     }
   }
 
@@ -208,14 +220,18 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     if (ship.id === 'alliance_chieftain' || ship.id === 'alliance_crusader' || ship.id === 'federal_gunship' || ship.id === 'vulture') {
       const hrp = ModuleUtils.findInternal('hrp', 3, 'D');
       const slot = ship.internal.filter(e => e.eligible && e.maxClass === 3);
-      ship.use(slot, hrp);
+      if (hrp) {
+        ship.use(slot, hrp);
+      }
     } else {
       const sg = ship.getAvailableModules().lightestShieldGenerator(ship.ladenMass);
       const slot = ship.internal.filter(a => !a.m)
         .filter(a => a.maxClass >= sg.class)
         .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
         [0];
-      ship.use(slot, sg);
+      if (sg) {
+        ship.use(slot, sg);
+      }
       if (engineeringLevel === 2) {
         // ELP G3
         const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
@@ -247,7 +263,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       .filter(a => a.maxClass >= sg.class)
       .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
       [0];
-    ship.use(slot, sg);
+    if (sg) {
+      ship.use(slot, sg);
+    }
     if (engineeringLevel === 1) {
       // ELP G3
       const shieldBP = getBlueprint('ShieldGenerator_Optimised', ship.findShieldGenerator());
@@ -298,8 +316,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
         .filter(d => d.rating === 'D')
         .filter(d => (d.engcap * 1.728) >= ship.boostEnergy)
         .sort((a, b) => a.class.toString().localeCompare(b.class.toString()))[0];
-
-      ship.use(ship.standard[4], pd);
+      if (pd) {
+        ship.use(ship.standard[4], pd);
+      }
       // CE G5
       const pdBP = getBlueprint('PowerDistributor_HighFrequency', ship.standard[4]);
       pdBP.grade = 5;
@@ -311,15 +330,18 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
         .filter(d => d.rating === 'D')
         .sort((a, b) => a.engcap > b.engcap)
         [0];
-      ship.use(ship.standard[4], pd);
+      if (pd) {
+        ship.use(ship.standard[4], pd);
+      }
     }
   } else {
     if (engineeringLevel === 3) {
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
         .sort((a, b) => b.class.toString().localeCompare(a.class.toString()))[0];
-
-      ship.use(ship.standard[4], pd);
+      if (pd) {
+        ship.use(ship.standard[4], pd);
+      }
       // CE G5
       const pdBP = getBlueprint('PowerDistributor_HighFrequency', ship.standard[4]);
       pdBP.grade = 5;
@@ -330,7 +352,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
         .sort((a, b) => b.class.toString().localeCompare(a.class.toString()))[0];
-      ship.use(ship.standard[4], pd);
+      if (pd) {
+        ship.use(ship.standard[4], pd);
+      }
     }
   }
 
@@ -338,61 +362,64 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     const slot = ship.internal.filter(s => s.maxClass >= 5 && !s.m)
       .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
       [0];
-    if (slot) {
-      const mod = ModuleUtils.findInternal('fh', 5, 'D');
+    const mod = ModuleUtils.findInternal('fh', 5, 'D');
+    if (slot && mod) {
       ship.use(slot, mod);
     }
   }
 
   if (tier === 1) {
-    ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'));
+    const pd = ModuleUtils.findStandard('pd', 1, 'D');
+    if (pd) {
+      ship.use(ship.standard[4]);
+    }
   }
 
-  let dssPriority = 0
-  let srvPriority = 0
-  let afmu = true
-  let cargo = false
-  let miningLaserPriority = 0
-  let refinery = false
-  let collector = false
-  let prospector = false
-  let miningTools = false
-  let refuelLimpets = false
-  let repairLimpets = false
-  console.log(role)
+  let dssPriority = 0;
+  let srvPriority = 0;
+  let afmu = true;
+  let cargo = false;
+  let miningLaserPriority = 0;
+  let refinery = false;
+  let collector = false;
+  let prospector = false;
+  let miningTools = false;
+  let refuelLimpets = false;
+  let repairLimpets = false;
+  console.log(role);
   if (role === 'exploration') {
     dssPriority = 2;
     afmu = true;
   } else if (role === 'surface') {
-    dssPriority = 2
-    srvPriority = 2
+    dssPriority = 2;
+    srvPriority = 2;
   } else if (role === 'materialProspector') {
-    miningLaserPriority = 2
-    srvPriority = 1
+    miningLaserPriority = 2;
+    srvPriority = 1;
   } else if (role === 'propectorMining') {
-    dssPriority = 1
-    prospector  = true
-    miningLaserPriority = 1
-    cargo = true
-    miningTools = true
+    dssPriority = 1;
+    prospector = true;
+    miningLaserPriority = 1;
+    cargo = true;
+    miningTools = true;
 
   } else if (role === 'bigRigMining') {
-    dssPriority = 1
-    miningLaserPriority = 2
-    cargo = true
-    collector = true
-    refinery = true
-    miningTools = true
+    dssPriority = 1;
+    miningLaserPriority = 2;
+    cargo = true;
+    collector = true;
+    refinery = true;
+    miningTools = true;
 
   } else if (role === 'fuelRat') {
-    refuelLimpets = true
-    cargo = true
-	  srvPriority = 1
+    refuelLimpets = true;
+    cargo = true;
+    srvPriority = 1;
 
   } else if (role === 'mechanic') {
-    repairLimpets = true
-    cargo = true
-    srvPriority = 1
+    repairLimpets = true;
+    cargo = true;
+    srvPriority = 1;
   } else if (role === 'trucker') {
     cargo = true;
   }
@@ -409,8 +436,8 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
   if (srvPriority === 2) {
     let mod;
     let slot = ship.internal.filter(s => !s.m)
-    .filter(s => s.maxClass >= 6)
-    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+      .filter(s => s.maxClass >= 6)
+      .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
     if (slot) {
       mod = ModuleUtils.findModule('pv', 'v2');
       ship.use(slot, mod);
@@ -423,8 +450,8 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
         ship.use(slot, mod);
       } else {
         slot = ship.internal.filter(s => !s.m)
-        .filter(s => s.maxClass >= 2)
-        .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+          .filter(s => s.maxClass >= 2)
+          .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
         if (slot) {
           mod = ModuleUtils.findModule('pv', 'v6');
           ship.use(slot, mod);
@@ -444,7 +471,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
   if (refuelLimpets === true) {
     const mod = ModuleUtils.findModule('fx', 'F4');
     const slot = ship.internal.filter(s => !s.m)
-    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+      .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
     ship.use(mod, slot);
   }
 
@@ -501,7 +528,7 @@ export function trader(ship, shielded, standardOpts) {
     .filter(a => (!a.eligible) || a.eligible.sg)
     .filter(a => a.maxClass >= sg.class)
     .sort((a, b) => shieldOrder.indexOf(a.maxClass) - shieldOrder.indexOf(b.maxClass));
-  shieldInternals.some(function(slot) {
+  shieldInternals.some(function (slot) {
     if (canMount(ship, slot, 'sg')) { // Assuming largest slot can hold an eligible shield
       const shield = ModuleUtils.findInternal('sg', slot.maxClass, 'A');
       if (shield && shield.maxmass > ship.hullMass) {
@@ -725,7 +752,7 @@ export function miner(ship, shielded) {
 
   // Dual mining lasers of highest possible class; remove anything else
   const miningLaserOrder = [2, 3, 4, 1, 0];
-  const miningLaserHardpoints = ship.hardpoints.concat().sort(function(a, b) {
+  const miningLaserHardpoints = ship.hardpoints.concat().sort(function (a, b) {
     return miningLaserOrder.indexOf(a.maxClass) - miningLaserOrder.indexOf(b.maxClass);
   });
   for (let s of miningLaserHardpoints) {
@@ -739,7 +766,7 @@ export function miner(ship, shielded) {
 
   // Number of collector limpets required to be active is a function of the size of the ship and the power of the lasers
   const miningLaserDps = ship.hardpoints.filter(h => h.m != null)
-    .reduce(function(a, b) {
+    .reduce(function (a, b) {
       return a + b.m.getDps();
     }, 0);
   // Find out how many internal slots we have, and their potential cargo size
@@ -770,7 +797,7 @@ export function miner(ship, shielded) {
 
   // Power distributor to power the mining lasers indefinitely
   const wepRateRequired = ship.hardpoints.filter(h => h.m != null)
-    .reduce(function(a, b) {
+    .reduce(function (a, b) {
       return a + b.m.getEps();
     }, 0);
   standardOpts.pd = ship.getAvailableModules().matchingPowerDist({ weprate: wepRateRequired }).id;
