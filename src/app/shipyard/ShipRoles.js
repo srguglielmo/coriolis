@@ -273,15 +273,59 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       const tBP = getBlueprint('Engine_Dirty', ship.standard[1]);
       tBP.grade = 3;
       tBP.special = Modifications.specials['special_engine_lightweight'];
-      ship.standard[1].blueprint = tBP;
-      setPercent(ship, ship.standard[1], 100);
+      ship.standard[1].m.blueprint = tBP;
+      setPercent(ship, ship.standard[1].m, 100);
     } else if (engineeringLevel === 2) {
       // DD G5
       const tBP = getBlueprint('Engine_Dirty', ship.standard[1]);
       tBP.grade = 5;
       tBP.special = Modifications.specials['special_engine_lightweight'];
-      ship.standard[1].blueprint = tBP;
-      setPercent(ship, ship.standard[1], 100);
+      ship.standard[1].m.blueprint = tBP;
+      setPercent(ship, ship.standard[1].m, 100);
+    }
+  }
+
+  if (tier !== 4) {
+    if (engineeringLevel === 3) {
+      const pd = ship.availCS.standard[4]
+      .filter(d => d.rating === 'D')
+      .filter(d => (d.engcap * 1.728) >= ship.boostEnergy)
+      .sort((a,b) => a.class.toString().localeCompare(b.class.toString()))[0]
+
+      ship.use(ship.standard[4], pd);
+      // CE G5
+      const pdBP = getBlueprint('PowerDistributor_HighFrequency', ship.standard[4]);
+      pdBP.grade = 5;
+      pdBP.special = Modifications.specials['special_powerdistributor_capacity'];
+      ship.standard[4].m.blueprint = pdBP;
+      setPercent(ship, ship.standard[4].m, 100);
+    } else {
+      const pd = ship.availCS.standard[4]
+      .filter(d => d.rating === 'D')
+      .filter(d => d.engcap >= ship.boostEnergy)
+      .sort((a,b) => a.class.toString().localeCompare(b.class.toString()))[0]
+      [0]
+      ship.use(ship.standard[4], pd)
+    }
+  } else {
+    if (engineeringLevel === 3) {
+      const pd = ship.availCS.standard[4]
+      .filter(d => d.rating === 'D')
+      .sort((a,b) => b.class.toString().localeCompare(a.class.toString()))[0]
+
+      ship.use(ship.standard[4], pd);
+      // CE G5
+      const pdBP = getBlueprint('PowerDistributor_HighFrequency', ship.standard[4]);
+      pdBP.grade = 5;
+      pdBP.special = Modifications.specials['special_powerdistributor_capacity'];
+      ship.standard[4].m.blueprint = pdBP;
+      setPercent(ship, ship.standard[4].m, 100);
+    } else {
+      const pd = ship.availCS.standard[4]
+      .filter(d => d.rating === 'D')
+      .sort((a,b) => b.class.toString().localeCompare(a.class.toString()))[0]
+
+      ship.use(ship.standard[4], pd);
     }
   }
 
