@@ -329,6 +329,14 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   }
 
+  if (ship.fighterHangars && fighter) {
+    const slot = ship.internal.filter(s => s.class === 5 && !s.m)[0];
+    if (slot) {
+      const module = ModuleUtils.findInternal('fh', 5, 'D');
+      ship.use(slot, module);
+    }
+  }
+
   const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
   const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
   ship.use(ship.standard[0], pp);
