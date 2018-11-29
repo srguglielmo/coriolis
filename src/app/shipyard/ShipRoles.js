@@ -306,8 +306,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     } else {
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
-        .filter(d => d.engcap >= ship.boostEnergy)
-        .sort((a, b) => a.class.toString().localeCompare(b.class.toString()))[0]
+        .sort((a, b) => a.engcap > b.engcap)
         [0];
       ship.use(ship.standard[4], pd);
     }
@@ -328,7 +327,6 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
         .sort((a, b) => b.class.toString().localeCompare(a.class.toString()))[0];
-
       ship.use(ship.standard[4], pd);
     }
   }
@@ -343,10 +341,14 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   }
 
-  const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
-  const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
-  ship.use(ship.standard[0], pp);
-  ship.use(ship.standard[1], t);
+  if (tier === 1) {
+    ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'));
+  }
+
+  // const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
+  // const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
+  // ship.use(ship.standard[0], pp);
+  // ship.use(ship.standard[1], t);
 
   // ship.useLightestStandard(standardOpts);
   ship.updatePowerGenerated()
