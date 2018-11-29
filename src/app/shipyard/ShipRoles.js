@@ -58,7 +58,6 @@ export function multiPurpose(ship, shielded, bulkheadIndex) {
  * @param fighter {Boolean} add fighter if supported
  */
 export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter) {
-  let standardOpts = { ppRating: 'D', pd: 'd3' };
   ship
     .emptyInternal()
     .emptyHardpoints()
@@ -200,7 +199,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     const fuelTank = ship.availCS.standard[6]
       .filter(e => e.fuel)
       .filter(e => e.fuel >= fuelNeeded);
-    ship.use(ship.standard[6], fuelTank[0]);
+    if (fuelTank[0]) {
+      ship.use(ship.standard[6], fuelTank[0]);
+    }
   }
 
   if (tier === 2) {
@@ -271,7 +272,9 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     } else {
       t = ModuleUtils.findStandard('t', ship.standard[1].maxClass, 'A');
     }
-    ship.use(ship.standard[1], t);
+    if (t) {
+      ship.use(ship.standard[1], t);
+    }
     if (engineeringLevel === 1) {
       // DD G3
       const tBP = getBlueprint('Engine_Dirty', ship.standard[1]);
