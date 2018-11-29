@@ -86,15 +86,12 @@ export default class StandardSlotSection extends SlotSection {
 
   /**
    * DW2 Build
-   * @param tier
-   * @param engineeringLevel
-   * @param role
    */
   _dw2() {
     this.selectedRefId = 'dw2';
     this.setState({ showDW2: false });
     ShipRoles.dw2Build(this.props.ship, this.state.DW2Tier, this.state.DW2Eng, this.state.DW2Role, this.state.DW2Gfsb, this.state.DW2Gpp, this.state.DW2Fighter);
-    this.props.ship.updateModificationsString()
+    this.props.ship.updateModificationsString();
     this.props.onChange();
     this.props.onCargoChange(this.props.ship.cargoCapacity);
     this.props.onFuelChange(this.props.ship.fuelCapacity);
@@ -108,16 +105,16 @@ export default class StandardSlotSection extends SlotSection {
         <ul id={'tier'}>
           <li className={cn({ active: this.state.DW2Tier === 1 }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Tier: 1 })} onKeyDown={this._keyDown}
-          >{translate('1- Hardcore exploration, fully maximize jump range')}</li>
+          >{translate('1 - Max. Jump Range, Unshielded')}</li>
           <li className={cn({ active: this.state.DW2Tier === 2 }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Tier: 2 })} onKeyDown={this._keyDown}
-          >{translate('2- Classical shielded exploration')}</li>
+          >{translate('2 - Max. Jump Range, Minimal Shields')}</li>
           <li className={cn({ active: this.state.DW2Tier === 3 }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Tier: 3 })} onKeyDown={this._keyDown}
-          >{translate('3- Surface exploration, improved shield')}</li>
+          >{translate('3 - Max. Jump Range, Optimal Shields')}</li>
           <li className={cn({ active: this.state.DW2Tier === 4 }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Tier: 4 })} onKeyDown={this._keyDown}
-          >{translate('4- Surface flight, improved shield and thrusters')}</li>
+          >{translate('4 - Max. Jump Range, Optimal Shields & Thrusters')}</li>
         </ul>
         <hr/>
         <div className='select-group cap'>{translate('Engineering Level')}</div>
@@ -130,7 +127,7 @@ export default class StandardSlotSection extends SlotSection {
           >{translate('Only Felicity Farseer and Elvira Martuuk')}</li>
           <li className={cn({ active: this.state.DW2Eng === 3 }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Eng: 3 })} onKeyDown={this._keyDown}
-          >{translate('All exploration related engineers')}</li>
+          >{translate('All exploration engineers')}</li>
         </ul>
         <hr/>
         <div className='select-group cap'>{translate('Role')}</div>
@@ -138,43 +135,50 @@ export default class StandardSlotSection extends SlotSection {
           <li className={cn({ active: this.state.DW2Role === 'exploration' }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Role: 'exploration' })}
               onKeyDown={this._keyDown}
-          >{translate('Exploration')}</li>
+          >{translate('Space exploration')}</li>
           <li className={cn({ active: this.state.DW2Role === 'surface' }, 'lc')} tabIndex="0"
               onClick={() => this.setState({ DW2Role: 'surface' })}
               onKeyDown={this._keyDown}
           >{translate('Surface exploration')}</li>
-          <li className={cn({ active: this.state.DW2Role === 'fullmining' }, 'lc')} tabIndex="0"
-              onClick={() => this.setState({ DW2Role: 'fullmining' })}
+          <li className={cn({ active: this.state.DW2Role === 'materialProspector' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'materialProspector' })}
+              onKeyDown={this._keyDown}
+          >{translate('Material prospector')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'propectorMining' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'propectorMining' })}
+              onKeyDown={this._keyDown}
+          >{translate('Prospector/Sapper Miner')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'bigRigMining' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'bigRigMining' })}
               onKeyDown={this._keyDown}
           >{translate('Big Rig, full mining')}</li>
-          <li className={cn({ active: this.state.DW2Role === 'prospector' }, 'lc')} tabIndex="0"
-              onClick={() => this.setState({ DW2Role: 'prospector' })}
-              onKeyDown={this._keyDown}
-          >{translate('Saper / Prospector mining')}</li>
-          <li className={cn({ active: this.state.DW2Role === 'rat' }, 'lc')} tabIndex="0"
-              onClick={() => this.setState({ DW2Role: 'rat' })} onKeyDown={this._keyDown}
-          >{translate('Fuel rat')}</li>
-          <li className={cn({ active: this.state.DW2Role === 'repair' }, 'lc')} tabIndex="0"
-              onClick={() => this.setState({ DW2Role: 'repair' })} onKeyDown={this._keyDown}
-          >{translate('Repair rat')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'fuelRat' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'fuelRat' })} onKeyDown={this._keyDown}
+          >{translate('Fuel Rat')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'mechanic' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'mechanic' })} onKeyDown={this._keyDown}
+          >{translate('Mechanic')}</li>
+          <li className={cn({ active: this.state.DW2Role === 'trucker' }, 'lc')} tabIndex="0"
+              onClick={() => this.setState({ DW2Role: 'trucker' })} onKeyDown={this._keyDown}
+          >{translate('Trucker')}</li>
         </ul>
         <hr/>
         <ul>
-        <li className={cn({ active: this.state.DW2Gfsb === true }, 'lc')}
-        onClick={() => this.setState({ DW2Gfsb: this.state.DW2Gfsb === true ? false : true })}>
-          Add Guardian FSD Booster
+          <li className={cn({ active: this.state.DW2Gfsb === true }, 'lc')}
+              onClick={() => this.setState({ DW2Gfsb: this.state.DW2Gfsb !== true })}>
+            Add Guardian FSD Booster
           </li>
         </ul>
         <ul>
-        <li className={cn({ active: this.state.DW2Gpp === true }, 'lc')}
-        onClick={() => this.setState({ DW2Gpp: this.state.DW2Gpp === true ? false : true })}>
-          Add Guardian Power Plant
+          <li className={cn({ active: this.state.DW2Gpp === true }, 'lc')}
+              onClick={() => this.setState({ DW2Gpp: this.state.DW2Gpp !== true })}>
+            Add Guardian Power Plant
           </li>
         </ul>
         <ul>
-        <li className={cn({ active: this.state.DW2Fighter === true }, 'lc')}
-        onClick={() => this.setState({ DW2Fighter: this.state.DW2Fighter === true ? false : true })}>
-          Add Fighter
+          <li className={cn({ active: this.state.DW2Fighter === true }, 'lc')}
+              onClick={() => this.setState({ DW2Fighter: this.state.DW2Fighter !== true })}>
+            Add Fighter
           </li>
         </ul>
         <hr/>
@@ -292,7 +296,6 @@ export default class StandardSlotSection extends SlotSection {
       ship={ship}
       warning={m => m instanceof Module ? m.getMaxMass() < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass) : m.maxmass < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass)}
     />;
-
 
     slots[3] = <StandardSlot
       key='fsd'
