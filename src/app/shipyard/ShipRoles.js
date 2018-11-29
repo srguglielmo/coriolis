@@ -345,6 +345,118 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     ship.use(ship.standard[4], ModuleUtils.findStandard('pd', 1, 'D'));
   }
 
+  let dssPriority = 0
+  let srvPriority = 0
+  let afmu = true
+  let cargo = false
+  let miningLaserPriority = 0
+  let refinery = false
+  let collector = false
+  let prospector = false
+  let miningTools = false
+  let refuelLimpets = false
+  let repairLimpets = false
+  console.log(role)
+  if (role === 'exploration') {
+    dssPriority = 2;
+    afmu = true;
+  } else if (role === 'surface') {
+    dssPriority = 2
+    srvPriority = 2
+  } else if (role === 'materialProspector') {
+    miningLaserPriority = 2
+    srvPriority = 1
+  } else if (role === 'propectorMining') {
+    dssPriority = 1
+    prospector  = true
+    miningLaserPriority = 1
+    cargo = true
+    miningTools = true
+
+  } else if (role === 'bigRigMining') {
+    dssPriority = 1
+    miningLaserPriority = 2
+    cargo = true
+    collector = true
+    refinery = true
+    miningTools = true
+
+  } else if (role === 'fuelRat') {
+    refuelLimpets = true
+    cargo = true
+	  srvPriority = 1
+
+  } else if (role === 'mechanic') {
+    repairLimpets = true
+    cargo = true
+    srvPriority = 1
+  } else if (role === 'trucker') {
+    cargo = true;
+  }
+
+  if (dssPriority === 2) {
+    const mod = ModuleUtils.findModule('ss', '2i');
+    const slot = ship.internal.filter(s => !s.m)
+      .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    console.log(slot);
+    console.log(mod);
+    ship.use(slot, mod);
+  }
+
+  if (srvPriority === 2) {
+    let mod;
+    let slot = ship.internal.filter(s => !s.m)
+    .filter(s => s.maxClass >= 6)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    if (slot) {
+      mod = ModuleUtils.findModule('pv', 'v2');
+      ship.use(slot, mod);
+    } else if (!slot) {
+      slot = ship.internal.filter(s => !s.m)
+        .filter(s => s.maxClass >= 4)
+        .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+      if (slot) {
+        mod = ModuleUtils.findModule('pv', 'v4');
+        ship.use(slot, mod);
+      } else {
+        slot = ship.internal.filter(s => !s.m)
+        .filter(s => s.maxClass >= 2)
+        .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+        if (slot) {
+          mod = ModuleUtils.findModule('pv', 'v6');
+          ship.use(slot, mod);
+        }
+      }
+    }
+
+  }
+
+  if (cargo === true) {
+    const slot = ship.internal.filter(s => !s.m)
+      .sort((a, b) => b.maxClass.toString().localeCompare(a.maxClass.toString()))[0];
+    const mod = ModuleUtils.findInternal('cr', slot.maxClass, 'E');
+    ship.use(slot, mod);
+  }
+
+  if (refuelLimpets === true) {
+    const mod = ModuleUtils.findModule('fx', 'F4');
+    const slot = ship.internal.filter(s => !s.m)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    ship.use(mod, slot);
+  }
+
+  if (repairLimpets === true) {
+
+  }
+
+  if (prospector === true) {
+
+  }
+
+  if (refinery === true) {
+
+  }
+
   // const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
   // const t = ship.getAvailableModules().lightestThruster(ship.ladenMass);
   // ship.use(ship.standard[0], pp);
