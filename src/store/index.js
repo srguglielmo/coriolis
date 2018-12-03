@@ -3,12 +3,13 @@ import Vuex from "vuex";
 
 Vue.use(Vuex);
 
-import { CommonStore as Common } from "./modules";
+import { CommonStore as Common, ShipStore as Ship } from "./modules";
 
 export default new Vuex.Store({
   state: {},
   modules: {
-    Common
+    Common,
+    Ship
   },
   mutations: {},
   actions: {}
