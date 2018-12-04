@@ -13,8 +13,10 @@ git checkout $BRANCH'''
       }
     }
     stage('Build') {
-      sshagent (credentials: ['willb']) {
-        sh 'ssh -o StrictHostKeyChecking=no 172.17.0.1 echo hi'
+      steps {
+        sshagent (credentials: ['willb']) {
+          sh 'ssh -o StrictHostKeyChecking=no 172.17.0.1 echo hi'
+        }
       }
     }
   }
