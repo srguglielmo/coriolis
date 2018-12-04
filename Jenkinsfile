@@ -15,7 +15,7 @@ git checkout $BRANCH'''
     stage('Build') {
       steps {
         sshagent (credentials: ['willb']) {
-          sh 'ssh -o StrictHostKeyChecking=no 172.17.0.1 echo hi'
+          sh 'ssh -o StrictHostKeyChecking=no willb@172.17.0.1 echo hi'
         }
       }
     }
