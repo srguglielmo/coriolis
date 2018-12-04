@@ -3,8 +3,13 @@ pipeline {
   stages {
     stage('Get coriolis-data') {
       steps {
-        sh '''cd ..
-git clone https://github.com/edcd/coriolis-data.git'''
+        sh '''YES=`echo $GIT_BRANCH | awk -F / \'{print $2}\'`
+export BRANCH=`git rev-parse --abbrev-ref $YES`
+rm -rf $WORKSPACE/../coriolis-data
+git clone https://github.com/edcd/coriolis-data.git $WORKSPACE/../coriolis-data
+cd ../coriolis-data
+git fetch --all
+git checkout $BRANCH'''
       }
     }
   }
