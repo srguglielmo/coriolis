@@ -109,7 +109,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     setPercent(ship, ship.standard[5].m, 100);
   }
 
-  if (ship.id === 'alliance_chieftain' || ship.id === 'imperial_clipper') {
+  if (ship.id === 'imperial_clipper') {
     const fs = ModuleUtils.findInternal('fs', 4, 'A');
     const slot = ship.internal.filter(a => a.maxClass === 4)[0];
     ship.use(slot, fs);
@@ -310,7 +310,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     }
   }
 
-  if (tier !== 4) {
+  if (tier === 4 || tier === 3) {
     if (engineeringLevel === 3) {
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
@@ -334,7 +334,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
         ship.use(ship.standard[4], pd);
       }
     }
-  } else {
+  } else if (tier === 4) {
     if (engineeringLevel === 3) {
       const pd = ship.availCS.standard[4]
         .filter(d => d.rating === 'D')
@@ -476,15 +476,105 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
   }
 
   if (repairLimpets === true) {
-
+    const slot = ship.internal.filter(s => !s.m)
+      .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    let mod;
+    if (slot.maxClass >= 3) {
+      mod = ModuleUtils.findModule('rpl', '9e');
+    } else {
+      mod = ModuleUtils.findModule('rpl', '9s');
+    }
+    ship.use(mod, slot);
   }
 
   if (prospector === true) {
+    const slot = ship.internal.filter(s => !s.m)
+      .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    let mod;
+    if (slot.maxClass >= 3) {
+      mod = ModuleUtils.findModule('pc', 'P9');
+    } else {
+      mod = ModuleUtils.findModule('pc', 'P4');
+    }
+    ship.use(mod, slot);
+  }
 
+  if (collector === true) {
+    const slots = ship.internal.filter(s => !s.m)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()));
+    if (slots.length >= 2) {
+      let slot = slots.find(s => s.maxClass >= 5);
+      let mod;
+      if (slot) {
+        mod = ModuleUtils.findInternal('cc', slot.maxClass, 'D');
+      } else if (slots.find(s => s.maxClass <= 4)) {
+        slot = slots.find(s => s.maxClass <= 4);
+        mod = ModuleUtils.findInternal('cc', slot.maxClass, 'D');
+      }
+      ship.use(slot, mod);
+    }
   }
 
   if (refinery === true) {
+    const slots = ship.internal.filter(s => !s.m)
+    .filter(s => s.maxClass >= 4)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    if (slots) {
+      const mod = ModuleUtils.findInternal('rf', 4, 'A');
+      ship.use(slots, mod);
+    } else {
+      const slot = ship.internal.filter(s => !s.m)
+      .filter(s => s.maxClass <= 3)
+      .sort((a, b) => b.maxClass.toString().localeCompare(a.maxClass.toString()))[0];
+      const mod = ModuleUtils.findInternal('rf', slot.maxClass, 'A');
+      ship.use(slots, mod);
+    }
+  }
 
+  if (dssPriority === 1) {
+    const slot = ship.internal.filter(s => !s.m)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))[0];
+    const dss = ModuleUtils.findInternal('ss', 1, 'C')
+    if (slot) {
+      ship.use(slot, dss);
+    }
+  }
+
+  if (srvPriority === 1) {
+    const slot = ship.internal.filter(s => !s.m)
+    .filter(s => s.maxClass >= 2)
+    .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()));
+    if (slot.find(s => s.maxClass >= 4)) {
+      const slot = slot.find(s => s.maxClass >= 4);
+      const srv = ModuleUtils.findInternal('pv', 4, 'G')
+      ship.use(slot, srv);
+    } else if (slot.find(s => s.maxClass >= 2)) {
+      const slot = slot.find(s => s.maxClass >= 2);
+      const srv = ModuleUtils.findInternal('pv', 2, 'G')
+      ship.use(slot, srv);
+    }
+  }
+
+  if (gfsb === true) {
+    const slots = ship.internal.filter(s => !s.m)
+    .filter(s => s.maxClass >= 1)
+    .sort((a, b) => b.maxClass.toString().localeCompare(a.maxClass.toString()));
+    if (slots.find(s => s.maxClass >= 5)) {
+      const mod = ModuleUtils.findInternal('gfsb', 5, 'H');
+      ship.use(slots.find(s => s.maxClass >= 5), mod)
+    } else if (slots.find(s => s.maxClass >= 4)) {
+      const mod = ModuleUtils.findInternal('gfsb', 4, 'H');
+      ship.use(slots.find(s => s.maxClass >= 4), mod)
+    } else if (slots.find(s => s.maxClass >= 3)) {
+      const mod = ModuleUtils.findInternal('gfsb', 3, 'H');
+      ship.use(slots.find(s => s.maxClass >= 3), mod)
+    } else if (slots.find(s => s.maxClass >= 2)) {
+      const mod = ModuleUtils.findInternal('gfsb', 2, 'H');
+      ship.use(slots.find(s => s.maxClass >= 2), mod)
+    } else if (slots.find(s => s.maxClass >= 1)) {
+      const mod = ModuleUtils.findInternal('gfsb', 1, 'H');
+      ship.use(slots.find(s => s.maxClass >= 1), mod)
+    }
   }
 
   // const pp = ship.getAvailableModules().lightestPowerPlant(Math.max(ship.powerRetracted, ship.powerDeployed), 'A');
