@@ -193,7 +193,7 @@ export function dw2Build(ship, tier, engineeringLevel, role, gfsb, gpp, fighter)
     let slot = ship.internal.filter(a => a.maxClass >= 7).filter(a => a.maxClass >= fs.class)
       .sort((a, b) => a.maxClass.toString().localeCompare(b.maxClass.toString()))
       [0];
-    if (slot.m) {
+    if (slot && slot.m) {
       fs = ModuleUtils.findInternal('fs', 6, 'A');
       slot = ship.internal.filter(a => a.maxClass === 6)[0];
       if (fs) {
