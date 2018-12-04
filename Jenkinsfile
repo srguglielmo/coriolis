@@ -12,5 +12,10 @@ git fetch --all
 git checkout $BRANCH'''
       }
     }
+    stage('Build') {
+      steps {
+        echo 'Hi'
+      }
+    }
   }
 }
