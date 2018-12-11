@@ -11,7 +11,7 @@ class Header extends Component {
   render() {
     return (
       <header className={"header"}>
-        <CoriolisLogo className='icon xl' />
+        <Link className='l menu' to={'/'}><CoriolisLogo className='icon xl' /></Link>
         <div className='l menu'>
           <div className={'menu-header'} onClick={this._openShips}>
             <Rocket className='warning' /><span className='menu-item-label'>{translate('ships')}</span>

@@ -1,9 +1,14 @@
 import React, { Component } from 'react';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, Link } from 'react-router-dom';
 import Loadable from "react-loadable";
 import Header from './components/Header';
-const LoadableComponent = Loadable({
+const LoadableHome = Loadable({
   loader: () => import("./pages/Home"),
+  loading: () => <h2>Loading</h2>
+});
+
+const LoadableOutfit = Loadable({
+  loader: () => import("./pages/Outfit"),
   loading: () => <h2>Loading</h2>
 });
 
@@ -11,12 +16,11 @@ class App extends Component {
   render() {
     return (
       <div style={{ minHeight: '100%' }}>
-        <Switch>
-          <Route exact path='/' component={LoadableComponent}/>
-        </Switch>
         <Header/>
-
-
+        <Switch>
+          <Route exact path='/' component={LoadableHome}/>
+          <Route path='/outfit/:ship' component={LoadableOutfit}/>
+        </Switch>
         <footer>
           <div className="right cap">
             <a href="https://github.com/EDCD/coriolis" target="_blank" rel="noopener noreferrer"
