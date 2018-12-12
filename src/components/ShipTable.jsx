@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { Factory, Ship, Module } from 'ed-forge';
+import {FORGE_SHIPS} from '../utils/Constants';
+
 import {Link} from 'react-router-dom';
 import cn from 'classnames';
 
@@ -34,47 +36,6 @@ function shipSummary(shipId) {
   // Build Ship
   return summary;
 }
-
-
-const FORGE_SHIPS = ['Adder',
-'Anaconda',
-'Asp',
-'Asp_Scout',
-'BelugaLiner',
-'CobraMkIII',
-'CobraMkIV',
-'Cutter',
-'DiamondBackXL',
-'DiamondBack',
-'Dolphin',
-'Eagle',
-'Empire_Courier',
-'Empire_Eagle',
-'Empire_Trader',
-'Federation_Corvette',
-'Federation_Dropship',
-'Federation_Dropship_MkII',
-'Federation_Gunship',
-'FerDeLance',
-'Hauler',
-'Independant_Trader',
-'Krait_MkII',
-'Mamba',
-'Krait_Light',
-'Orca',
-'Python',
-'SideWinder',
-'Type6',
-'Type7',
-'Type9',
-'Type9_Military',
-'TypeX',
-'TypeX_2',
-'TypeX_3',
-'Viper',
-'Viper_MkIV',
-'Vulture'];
-
 class ShipTable extends Component {
   static cachedSummaries = null;
 
@@ -89,8 +50,11 @@ class ShipTable extends Component {
     this.state = {
       shipRows: [],
       detailRows: []
-    };
-    this._genShipRows();
+	};
+  }
+
+  componentWillMount() {
+	this._genShipRows();
   }
 
   _genShipRows() {
@@ -107,15 +71,17 @@ class ShipTable extends Component {
         })}
       >
         <td className="le">
-          <Link to={'/outfit/' + shipName}>{ship.getShipName()}</Link>
+          <Link to={'/outfit/' + shipName}>{shipName}</Link>
         </td>
-      </tr>);
+	  </tr>);
+	  this.setState({shipRows})
     }
   }
 
   _highlightShip() {}
 
   render() {
+
     return (
       <div>
         <div
