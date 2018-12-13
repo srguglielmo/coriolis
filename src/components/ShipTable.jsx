@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { Factory, Ship, Module } from 'ed-forge';
+import * as Forge from 'ed-forge';
 import {FORGE_SHIPS} from '../utils/Constants';
 
 import {Link} from 'react-router-dom';
@@ -17,7 +17,7 @@ const units = {};
  * @return {Object}          Ship summary and aggregated properties
  */
 function shipSummary(shipId) {
-  const forgeShip = Factory.newShip(shipId);
+  const forgeShip = Forge.Factory.newShip(shipId);
   let summary = {
     id: shipId,
     hpCount: 0,
@@ -60,7 +60,7 @@ class ShipTable extends Component {
   _genShipRows() {
     const shipRows = [];
     for (const shipName of FORGE_SHIPS) {
-      const ship = Factory.newShip(shipName);
+      const ship = Forge.Factory.newShip(shipName);
       console.log(ship);
       shipRows.push(<tr
         key={shipName}
