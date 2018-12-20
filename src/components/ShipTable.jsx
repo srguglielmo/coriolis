@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import * as Forge from 'ed-forge';
+import {getShipMetaProperty} from 'ed-forge/lib/data/ships';
 import {FORGE_SHIPS} from '../utils/Constants';
-
 import {Link} from 'react-router-dom';
 import cn from 'classnames';
 
@@ -49,8 +49,32 @@ class ShipTable extends Component {
     }
     this.state = {
       shipRows: [],
+      shipPredicate: 'name',
+      shipDesc: true,
       detailRows: []
 	};
+  }
+
+  /**
+   * Update state with the specified sort predicates
+   * @param  {String} shipPredicate      Sort predicate - property name
+   * @param  {number} shipPredicateIndex Sort predicate - property index
+   */
+  _sortShips(shipPredicate, shipPredicateIndex) {
+    let shipDesc = this.state.shipDesc;
+
+    if (typeof shipPredicateIndex == 'object') {
+      shipPredicateIndex = undefined;
+    }
+
+    if (
+      this.state.shipPredicate == shipPredicate &&
+      this.state.shipPredicateIndex == shipPredicateIndex
+    ) {
+      shipDesc = !shipDesc;
+    }
+
+    this.setState({ shipPredicate, shipDesc, shipPredicateIndex });
   }
 
   componentWillMount() {
@@ -61,6 +85,7 @@ class ShipTable extends Component {
     const shipRows = [];
     for (const shipName of FORGE_SHIPS) {
       const ship = Forge.Factory.newShip(shipName);
+      let name = shipName
       console.log(ship);
       shipRows.push(<tr
         key={shipName}
@@ -71,7 +96,7 @@ class ShipTable extends Component {
         })}
       >
         <td className="le">
-          <Link to={'/outfit/' + shipName}>{shipName}</Link>
+          <Link to={'/outfit/' + shipName}>{name}</Link>
         </td>
 	  </tr>);
 	  this.setState({shipRows})
@@ -81,7 +106,8 @@ class ShipTable extends Component {
   _highlightShip() {}
 
   render() {
-
+    let sortShips = (predicate, index) =>
+      this._sortShips.bind(this, predicate, index);
     return (
       <div>
         <div

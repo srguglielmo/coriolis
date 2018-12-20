@@ -4,8 +4,8 @@ import { CoriolisLogo, Hammer, Rocket, Cogs, Help, StatsBars } from './SvgIcons'
 
 const cn = (...args) => args.join(' ')
 const translate = (args) => args;
-const hasBuilds = false
-const openedMenu = false
+const hasBuilds = () => false
+const openedMenu = () => false
 
 class Header extends Component {
   render() {
