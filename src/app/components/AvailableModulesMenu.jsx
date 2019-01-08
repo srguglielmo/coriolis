@@ -73,7 +73,12 @@ const GRPCAT = {
   'gfsb': 'guardian',
   'gmrp': 'guardian',
   'gsc': 'guardian',
-  'ghrp': 'guardian'
+  'ghrp': 'guardian',
+
+  // Mining
+  'scl': 'mining',
+  'pwa': 'mining',
+  'sdm': 'mining'
 };
 // Order here is the order in which items will be shown in the modules menu
 const CATEGORIES = {
@@ -90,7 +95,7 @@ const CATEGORIES = {
   'structural reinforcement': ['hr', 'mrp'],
   'dc': ['dc'],
   // Hardpoints
-  'lasers': ['pl', 'ul', 'bl', 'ml'],
+  'lasers': ['pl', 'ul', 'bl'],
   'projectiles': ['mc', 'c', 'fc', 'pa', 'rg'],
   'ordnance': ['mr', 'tp', 'nl'],
   // Utilities
@@ -102,7 +107,9 @@ const CATEGORIES = {
   'experimental': ['axmc', 'axmr', 'rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn', 'rcpl', 'dtl', 'rsl', 'mahr',],
 
   // Guardian
-  'guardian': ['gpp', 'gpd', 'gpc', 'ggc', 'gsrp', 'gfsb', 'ghrp', 'gmrp', 'gsc']
+  'guardian': ['gpp', 'gpd', 'gpc', 'ggc', 'gsrp', 'gfsb', 'ghrp', 'gmrp', 'gsc'],
+
+  'mining': ['ml', 'scl', 'pwa', 'sdm', 'abl'],
 };
 
 /**
@@ -221,7 +228,16 @@ export default class AvailableModulesMenu extends TranslatedComponent {
               }
               list.push(buildGroup(grp, modules[grp]));
               for (const i of modules[grp]) {
-                fuzzy.push({ grp, m: i, name: `${i.class}${i.rating} ${translate(grp)} ${i.mount ? i.mount : ''}` });
+                let mount = '';
+                if (i.mount === 'F') {
+                  mount = 'Fixed';
+                } else if (i.mount === 'G') {
+                  mount = 'Gimballed';
+                } else if (i.mount === 'T') {
+                  mount = 'Turreted';
+                }
+                const fuzz = { grp, m: i, name: `${i.class}${i.rating}${mount ? ' '  + mount : ''} ${translate(grp)}` };
+                fuzzy.push(fuzz);
               }
             }
           }
@@ -363,10 +379,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * mounted module and the hovered modules
    */
   _showSearch() {
+    if (this.props.modules instanceof Array) {
+      return;
+    }
     return (
       <FuzzySearch
         list={this.state.fuzzy}
         keys={['grp', 'name']}
+        tokenize={true}
         className={'input'}
         width={'100%'}
         style={{ padding: 0 }}
