@@ -140,6 +140,38 @@ class ShipTable extends Component {
    */
   _shipRowElement(s, translate, u, fInt, fRound) {
     let noTouch = this.context.noTouch;
+	const hps = s.getHardpoints(null, true).map(hp => hp.getSize());
+	const hpCounts = {
+		0: 0,
+		1: 0,
+		2: 0,
+		3: 0,
+		4: 0,
+	};
+	hps.forEach(function (v) {
+		if (hpCounts[v]) {
+			hpCounts[v]++;
+		}
+		else {
+			hpCounts[v] = 1;
+		}
+	});
+
+	const ints = s.getInternals(null, true).map(int => int.getSize());
+	const intCounts = {
+		1: 0,
+		2: 0,
+		3: 0,
+		4: 0,
+		5: 0,
+		6: 0,
+		7: 0,
+		8: 0,
+	};
+	ints.forEach(function (v) {
+		if (intCounts[v]) intCounts[v]++;
+		else intCounts[v] = 1;
+	});
 
     return (
       <tr
@@ -173,19 +205,19 @@ class ShipTable extends Component {
         <td className="cn">{s.getPowerDistributor().getSize()}</td>
         <td className="cn">{s.getSensors().getSize()}</td>
         <td className="cn">{s.getCoreFuelTank().getSize()}</td>
-        {/*<td className={cn({ disabled: !s.hp[1] })}>{s.hp[1]}</td>*/}
-        {/*<td className={cn({ disabled: !s.hp[2] })}>{s.hp[2]}</td>*/}
-        {/*<td className={cn({ disabled: !s.hp[3] })}>{s.hp[3]}</td>*/}
-        {/*<td className={cn({ disabled: !s.hp[4] })}>{s.hp[4]}</td>*/}
-        {/*<td className={cn({ disabled: !s.hp[0] })}>{s.hp[0]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[0] })}>{s.int[0]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[1] })}>{s.int[1]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[2] })}>{s.int[2]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[3] })}>{s.int[3]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[4] })}>{s.int[4]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[5] })}>{s.int[5]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[6] })}>{s.int[6]}</td>*/}
-        {/*<td className={cn({ disabled: !s.int[7] })}>{s.int[7]}</td>*/}
+		<td className={cn({ disabled: !hpCounts[1] })}>{hpCounts[1]}</td>
+		<td className={cn({ disabled: !hpCounts[2] })}>{hpCounts[2]}</td>
+		<td className={cn({ disabled: !hpCounts[4] })}>{hpCounts[3]}</td>
+		<td className={cn({ disabled: !hpCounts[4] })}>{hpCounts[4]}</td>
+		<td className={cn({ disabled: !hpCounts[0] })}>{hpCounts[0]}</td>
+        <td className={cn({ disabled: !intCounts[1] })}>{intCounts[1]}</td>
+        <td className={cn({ disabled: !intCounts[2] })}>{intCounts[2]}</td>
+        <td className={cn({ disabled: !intCounts[3] })}>{intCounts[3]}</td>
+        <td className={cn({ disabled: !intCounts[4] })}>{intCounts[4]}</td>
+        <td className={cn({ disabled: !intCounts[5] })}>{intCounts[5]}</td>
+        <td className={cn({ disabled: !intCounts[6] })}>{intCounts[6]}</td>
+        <td className={cn({ disabled: !intCounts[7] })}>{intCounts[7]}</td>
+        <td className={cn({ disabled: !intCounts[8] })}>{intCounts[8]}</td>
       </tr>
     );
   }
