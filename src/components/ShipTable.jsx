@@ -1,15 +1,21 @@
 import React, { Component } from 'react';
 import * as Forge from 'ed-forge';
-import {getShipMetaProperty} from 'ed-forge/lib/data/ships';
+import {getShipMetaProperty, getShipProperty} from 'ed-forge/lib/data/ships';
 import {FORGE_SHIPS} from '../utils/Constants';
 import {Link} from 'react-router-dom';
 import cn from 'classnames';
+export const SizeMap = ['', 'small', 'medium', 'large', 'capital'];
 
 const sortShips = () => {};
 const translate = args => args;
 const hide = args => args;
 const termtip = args => args;
 const units = {};
+const formats = {
+  round: val => Math.round(val),
+  f1: val => val,
+  int: val => val
+};
 
 /**
  * Generate Ship summary and aggregated properties
@@ -17,7 +23,12 @@ const units = {};
  * @return {Object}          Ship summary and aggregated properties
  */
 function shipSummary(shipId) {
-  const forgeShip = Forge.Factory.newShip(shipId);
+  let forgeShip;
+  try {
+    forgeShip = Forge.Factory.newShip(shipId);
+  } catch (e) {
+    console.error(e)
+  }
   let summary = {
     id: shipId,
     hpCount: 0,
@@ -26,8 +37,11 @@ function shipSummary(shipId) {
     maxPassengers: 0,
     hp: [0, 0, 0, 0, 0], // Utility, Small, Medium, Large, Huge
     int: [0, 0, 0, 0, 0, 0, 0, 0], // Sizes 1 - 8
-    standard: forgeShip.getCoreModules().map(e => e.getSize()),
-    agility: 0
+    standard: forgeShip.getCoreModules().map(e => {
+      console.log(e)
+      return 0 //e.getClass();
+    }),
+    agility: forgeShip.readProp('pitch') + forgeShip.readProp('yaw') + forgeShip.readProp('roll')
       // shipData.properties.pitch +
       // shipData.properties.yaw +
       // shipData.properties.roll
@@ -68,8 +82,8 @@ class ShipTable extends Component {
     }
 
     if (
-      this.state.shipPredicate == shipPredicate &&
-      this.state.shipPredicateIndex == shipPredicateIndex
+      this.state.shipPredicate === shipPredicate &&
+      this.state.shipPredicateIndex === shipPredicateIndex
     ) {
       shipDesc = !shipDesc;
     }
@@ -83,10 +97,22 @@ class ShipTable extends Component {
 
   _genShipRows() {
     const shipRows = [];
+    const detailRows = [];
     for (const shipName of FORGE_SHIPS) {
-      const ship = Forge.Factory.newShip(shipName);
-      let name = shipName
-      console.log(ship);
+      let ship;
+      try {
+        ship = Forge.Factory.newShip(shipName);
+      } catch (e) {
+        console.error(e)
+      }
+      let name = shipName;
+      detailRows.push(this._shipRowElement(
+        ship,
+        translate,
+        units,
+        formats.int,
+        formats.f1,
+      ));
       shipRows.push(<tr
         key={shipName}
         style={{ height: '1.5em' }}
@@ -99,8 +125,69 @@ class ShipTable extends Component {
           <Link to={'/outfit/' + shipName}>{name}</Link>
         </td>
 	  </tr>);
-	  this.setState({shipRows})
+	  this.setState({shipRows, detailRows})
     }
+  }
+
+  /**
+   * Generate the table row summary for the ship
+   * @param  {Object} s           Ship summary
+   * @param  {Function} translate Translate function
+   * @param  {Object} u           Localized unit map
+   * @param  {Function} fInt      Localized integer formatter
+   * @param  {Function} fRound    Localized round formatter
+   * @return {React.Component}    Table Row
+   */
+  _shipRowElement(s, translate, u, fInt, fRound) {
+    let noTouch = this.context.noTouch;
+
+    return (
+      <tr
+        style={{ height: '1.5em' }}
+        className={cn({
+          highlighted: noTouch && this.state.shipId === s.id,
+        })}
+        onMouseEnter={noTouch && this._highlightShip.bind(this, s.id)}
+      >
+        <td className="ri">{s.readMeta('manufacturer')}</td>
+        <td className="ri">{fInt(s.readMeta('retailCost'))}</td>
+        <td className="ri cap">{translate(SizeMap[s.readMeta('class')])}</td>
+        <td className="ri">{fInt(s.readMeta('crew'))}</td>
+        <td className="ri">{s.readProp('masslock')}</td>
+        <td className="ri">{fInt(s.readProp('pitch') + s.readProp('yaw') + s.readProp('roll'))}</td>
+        <td className="ri">{fInt(s.readProp('hardness'))}</td>
+        <td className="ri">{fInt(s.readProp('hullmass'))}</td>
+        <td className="ri">{fInt(s.get('speed'))}</td>
+        <td className="ri">{fInt(s.get('boost'))}</td>
+        <td className="ri">{fInt(s.get('basearmour'))}</td>
+        <td className="ri">{fInt(s.get('baseshieldstrength'))}</td>
+        <td className="ri">{fInt(s.topSpeed)}</td>
+        <td className="ri">{fInt(s.topBoost)}</td>
+        <td className="ri">{fRound(s.maxJumpRange)}</td>
+        <td className="ri">{fInt(s.maxCargo)}</td>
+        <td className="ri">{fInt(s.maxPassengers)}</td>
+        <td className="cn">{s.getPowerPlant().getSize()}</td>
+        <td className="cn">{s.getThrusters().getSize()}</td>
+        <td className="cn">{s.getFSD().getSize()}</td>
+        <td className="cn">{s.getLifeSupport().getSize()}</td>
+        <td className="cn">{s.getPowerDistributor().getSize()}</td>
+        <td className="cn">{s.getSensors().getSize()}</td>
+        <td className="cn">{s.getCoreFuelTank().getSize()}</td>
+        {/*<td className={cn({ disabled: !s.hp[1] })}>{s.hp[1]}</td>*/}
+        {/*<td className={cn({ disabled: !s.hp[2] })}>{s.hp[2]}</td>*/}
+        {/*<td className={cn({ disabled: !s.hp[3] })}>{s.hp[3]}</td>*/}
+        {/*<td className={cn({ disabled: !s.hp[4] })}>{s.hp[4]}</td>*/}
+        {/*<td className={cn({ disabled: !s.hp[0] })}>{s.hp[0]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[0] })}>{s.int[0]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[1] })}>{s.int[1]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[2] })}>{s.int[2]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[3] })}>{s.int[3]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[4] })}>{s.int[4]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[5] })}>{s.int[5]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[6] })}>{s.int[6]}</td>*/}
+        {/*<td className={cn({ disabled: !s.int[7] })}>{s.int[7]}</td>*/}
+      </tr>
+    );
   }
 
   _highlightShip() {}
@@ -120,7 +207,7 @@ class ShipTable extends Component {
             maxWidth: '100%'
           }}
         >
-          <table style={{ width: '12em', position: 'absolute', zIndex: 1 }}>
+          <table style={{ width: '13em', position: 'absolute', zIndex: 1 }}>
             <thead>
             <tr>
               <th className="le rgt">&nbsp;</th>
@@ -131,7 +218,7 @@ class ShipTable extends Component {
               </th>
             </tr>
             <tr>
-              <th className="le rgt invisible">{units['m/s']}</th>
+              <th className="le rgt">&nbsp;</th>
             </tr>
             </thead>
             <tbody onMouseLeave={this._highlightShip.bind(this, null)}>
@@ -139,7 +226,7 @@ class ShipTable extends Component {
             </tbody>
           </table>
           <div style={{ overflowX: 'scroll', maxWidth: '100%' }}>
-            <table style={{ marginLeft: 'calc(12em - 1px)', zIndex: 0 }}>
+            <table style={{ marginLeft: 'calc(13em - 1px)', zIndex: 0 }}>
               <thead>
               <tr className="main">
                 <th
