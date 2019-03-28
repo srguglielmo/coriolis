@@ -10,6 +10,9 @@ import * as PT from './pt';
 import * as CN from './cn';
 import * as d3 from 'd3';
 
+const owofy = require("owofy");
+
+
 let fallbackTerms = EN.terms;
 
 /**
@@ -39,7 +42,7 @@ export function getLanguage(langCode) {
   const round = function(x, n) { const ten_n = Math.pow(10,n); return Math.round(x * ten_n) / ten_n; };
 
   if(lang === EN) {
-    translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || t; };
+    translate = (t, x) => { return owofy(currentTerms[t + '_' + x] || currentTerms[t] || t); };
   } else {
     translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || fallbackTerms[t + '_' + x] || fallbackTerms[t] || t; };
   }

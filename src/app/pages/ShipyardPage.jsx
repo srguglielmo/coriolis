@@ -6,6 +6,7 @@ import Ship from '../shipyard/Ship';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { SizeMap } from '../shipyard/Constants';
 import Link from '../components/Link';
+const owofy = require("owofy");
 
 /**
  * Counts the hardpoints by class/size
@@ -177,13 +178,13 @@ export default class ShipyardPage extends Page {
     return (
       <tr
         key={s.id}
-        style={{ height: '1.5em' }}
+        style={{ height: "1.5em" }}
         className={cn({
-          highlighted: noTouch && this.state.shipId === s.id,
+          highlighted: noTouch && this.state.shipId === s.id
         })}
         onMouseEnter={noTouch && this._highlightShip.bind(this, s.id)}
       >
-        <td className="ri">{s.manufacturer}</td>
+        <td className="ri">{owofy(s.manufacturer)}</td>
         <td className="ri">{fInt(s.retailCost)}</td>
         <td className="ri cap">{translate(SizeMap[s.class])}</td>
         <td className="ri">{fInt(s.crew)}</td>
@@ -302,13 +303,12 @@ export default class ShipyardPage extends Page {
           onMouseEnter={noTouch && this._highlightShip.bind(this, s.id)}
         >
           <td className="le">
-            <Link href={'/outfit/' + s.id}>{s.name} {s.beta === true ? '(Beta)' : null}</Link>
+            <Link href={'/outfit/' + s.id}>{owofy(s.name)} {s.beta === true ? '(Beta)' : null}</Link>
           </td>
         </tr>
       );
       i++;
     }
-
     return (
       <div className="page" style={{ fontSize: sizeRatio + 'em' }}>
         <div
@@ -595,6 +595,7 @@ export default class ShipyardPage extends Page {
                 {detailRows}
               </tbody>
             </table>
+
           </div>
         </div>
       </div>
