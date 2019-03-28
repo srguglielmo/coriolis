@@ -59,7 +59,28 @@
         <!-- End Piwik Code -->
 
         <!-- Bugsnag -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
         <script src="https://d2wy8f7a9ursnm.cloudfront.net/v5.0.0/bugsnag.min.js"></script>
+        <script src="../node_modules/clippy.js/build/clippy.min.js"></script>
+        <script type="text/javascript">
+          const advice = ['When all else fails, Put a docking computer in every slot. My name is Clippy.', 'Fly in a stright line and roll, your evasion increases by 200%!'];
+          clippy.load('Clippy', function (agent) {
+            // do anything with the loaded agent
+            agent.show();
+
+            setInterval(() => {
+              agent.animate();
+              const toSpeak = advice[Math.random() * advice.length>>0];
+              console.log(advice)
+              console.log(toSpeak)
+              agent.speak(toSpeak);
+            }, (10000));
+            setInterval(() => {
+              agent.animate();
+              agent.speak('@everyone FDL. :pray:');
+            }, (69000));
+          });
+        </script>
         <script>
       window.bugsnagClient = bugsnag('ba9fae819372850fb660755341fa6ef5', {appVersion: window.BUGSNAG_VERSION || undefined})
       window.Bugsnag = window.bugsnagClient
