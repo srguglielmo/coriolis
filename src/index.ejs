@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <title>Coriolis EDCD Edition</title>
     <meta charset="UTF-8">
     <link rel="stylesheet" href="<%= htmlWebpackPlugin.files.css[0] %>">
@@ -13,7 +13,7 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="shortcut icon" href=/favicon2.ico>
     <link rel="icon" sizes="152x152 192x192" type="image/png"
-      href="/192x192.png">
+          href="/192x192.png">
 
     <!-- Apple/iOS headers -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,65 +29,75 @@
     <script>
       window.CORIOLIS_GAPI_KEY = '<%- htmlWebpackPlugin.options.gapiKey %>';
       window.CORIOLIS_VERSION = '<%- htmlWebpackPlugin.options.version %>';
-      window.CORIOLIS_DATE = '<%- htmlWebpackPlugin.options.date.toISOString().slice(0, 10)  %>';
-      window.BUGSNAG_VERSION = '<%- htmlWebpackPlugin.options.version + '-' + htmlWebpackPlugin.options.date.toISOString()  %>';
+      window.CORIOLIS_DATE = '<%- htmlWebpackPlugin.options.date.toISOString().slice(0, 10) %>';
+      window.BUGSNAG_VERSION = '<%- htmlWebpackPlugin.options.version + '-' + htmlWebpackPlugin.options.date.toISOString() %>';
     </script>
     <% if (htmlWebpackPlugin.options.uaTracking) { %>
-      <script>
-      window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
-      ga('create', '<%- htmlWebpackPlugin.options.uaTracking %>', 'auto');
-      ga('send', 'pageview');
-    </script>
-      <script async src='https://www.google-analytics.com/analytics.js'></script>
-      <% } %>
-
-        <!-- Piwik -->
-        <!-- <script type="text/javascript">
-      var _paq = _paq || [];
-      /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-      _paq.push(["setCookieDomain", "*.coriolis.edcd.io"]);
-      _paq.push(['trackPageView']);
-      _paq.push(['enableLinkTracking']);
-      (function() {
-        var u="//stats.isadankme.me/";
-        _paq.push(['setTrackerUrl', u+'piwik.php']);
-        _paq.push(['setSiteId', '4']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-      })();
-    </script>-->
-        <!-- End Piwik Code -->
-
-        <!-- Bugsnag -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
-        <script src="https://d2wy8f7a9ursnm.cloudfront.net/v5.0.0/bugsnag.min.js"></script>
-        <script src="../node_modules/clippy.js/build/clippy.min.js"></script>
-        <script type="text/javascript">
-          const advice = ['When all else fails, Put a docking computer in every slot. My name is Clippy.', 'Fly in a stright line and roll, your evasion increases by 200%!'];
-          clippy.load('Clippy', function (agent) {
-            // do anything with the loaded agent
-            agent.show();
-
-            setInterval(() => {
-              agent.animate();
-              const toSpeak = advice[Math.random() * advice.length>>0];
-              console.log(advice)
-              console.log(toSpeak)
-              agent.speak(toSpeak);
-            }, (10000));
-            setInterval(() => {
-              agent.animate();
-              agent.speak('@everyone FDL. :pray:');
-            }, (69000));
-          });
-        </script>
         <script>
-      window.bugsnagClient = bugsnag('ba9fae819372850fb660755341fa6ef5', {appVersion: window.BUGSNAG_VERSION || undefined})
-      window.Bugsnag = window.bugsnagClient
-    </script>
-      </head>
-      <body style="background-color:#000;">
-        <section id="coriolis"></section>
+          window.ga = window.ga || function() {(ga.q = ga.q || []).push(arguments);};
+          ga.l = +new Date;
+          ga('create', '<%- htmlWebpackPlugin.options.uaTracking %>', 'auto');
+          ga('send', 'pageview');
+        </script>
+        <script async src='https://www.google-analytics.com/analytics.js'></script>
+    <% } %>
 
-      </body>
-    </html>
+    <!-- Piwik -->
+    <!-- <script type="text/javascript">
+  var _paq = _paq || [];
+  /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+  _paq.push(["setCookieDomain", "*.coriolis.edcd.io"]);
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="//stats.isadankme.me/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', '4']);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.type='text/javascript'; g.async=true; g.defer=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+  })();
+</script>-->
+    <!-- End Piwik Code -->
+
+    <!-- Bugsnag -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.js"></script>
+    <script src="https://d2wy8f7a9ursnm.cloudfront.net/v5.0.0/bugsnag.min.js"></script>
+    <script src="../node_modules/clippy.js/build/clippy.min.js"></script>
+    <script type="text/javascript">
+      const advice = ['When all else fails, Put a docking computer in every slot. My name is Clippy.',
+        'Fly in a stright line and roll, your evasion increases by 200%!',
+        'Boost!!!',
+        'If you are running out of power, consider deactivating thrusters!',
+        'Make sure to set fire-groups for your SCBs!',
+        'If you find yourself dying often - git gud!',
+        'Remember, shield boosters increase skill!',
+        'Remember, B rated drives offer greater speed!',
+        'Point directly into the jet cone and full throttle for optimal FSD boost.',
+        'Raxxla can only be found in open play.'];
+      clippy.load('Clippy', function(agent) {
+        // do anything with the loaded agent
+        agent.show();
+
+        setInterval(() => {
+          agent.animate();
+          const toSpeak = advice[Math.random() * advice.length >> 0];
+          console.log(advice);
+          console.log(toSpeak);
+          agent.speak(toSpeak);
+        }, (10000));
+        setInterval(() => {
+          agent.animate();
+          agent.speak('@everyone FDL. :pray:');
+        }, (69000));
+      });
+    </script>
+    <script>
+      window.bugsnagClient = bugsnag('ba9fae819372850fb660755341fa6ef5', { appVersion: window.BUGSNAG_VERSION || undefined });
+      window.Bugsnag = window.bugsnagClient;
+    </script>
+</head>
+<body style="background-color:#000;">
+<section id="coriolis"></section>
+
+</body>
+</html>
