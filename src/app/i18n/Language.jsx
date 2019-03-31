@@ -42,7 +42,14 @@ export function getLanguage(langCode) {
   const round = function(x, n) { const ten_n = Math.pow(10,n); return Math.round(x * ten_n) / ten_n; };
 
   if(lang === EN) {
-    translate = (t, x) => { return owofy(currentTerms[t + '_' + x] || currentTerms[t] || t); };
+    translate = (t, x) => {
+      if (currentTerms[t + '_' + x]) {
+        return owofy(currentTerms[t + '_' + x])
+      } else if (currentTerms[t]) {
+        return owofy(currentTerms[t])
+      }
+      return t;
+    };
   } else {
     translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || fallbackTerms[t + '_' + x] || fallbackTerms[t] || t; };
   }

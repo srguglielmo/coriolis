@@ -32,7 +32,7 @@ module.exports = {
       from: 'src/images/logo/*',
       flatten: true,
       to: ''
-    }, 'src/iframe.html', 'src/xdLocalStoragePostMessageApi.min.js']),
+    }, 'src/iframe.html', 'src/xdLocalStoragePostMessageApi.min.js', 'src/clippy.min.js']),
     // new webpack.optimize.CommonsChunkPlugin({
     //  name: 'lib',
     //  filename: 'lib.[chunkhash:6].js'
