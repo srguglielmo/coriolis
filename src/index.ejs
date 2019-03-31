@@ -73,7 +73,8 @@
         'Remember, shield boosters increase skill!',
         'Remember, B rated drives offer greater speed!',
         'Point directly into the jet cone and full throttle for optimal FSD boost.',
-        'Raxxla can only be found in open play.'];
+        'Raxxla can only be found in open play.',
+      'Try silent running when under focus to drop aggro, and reboot when your opponents lose sight of you!'];
       clippy.load('Clippy', function(agent) {
         // do anything with the loaded agent
         agent.show();
@@ -81,10 +82,8 @@
         setInterval(() => {
           agent.animate();
           const toSpeak = advice[Math.random() * advice.length >> 0];
-          console.log(advice);
-          console.log(toSpeak);
           agent.speak(toSpeak);
-        }, (10000));
+        }, (20000));
         setInterval(() => {
           agent.animate();
           agent.speak('@everyone FDL. :pray:');
