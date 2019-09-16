@@ -9,7 +9,6 @@ import { canMount } from '../utils/SlotFunctions';
  * Internal slot section
  */
 export default class InternalSlotSection extends SlotSection {
-
   /**
    * Constructor
    * @param  {Object} props   React Component properties
@@ -221,29 +220,24 @@ export default class InternalSlotSection extends SlotSection {
     let slots = [];
     let { currentMenu, ship } = this.props;
     let { originSlot, targetSlot } = this.state;
-    let { internal, fuelCapacity } = ship;
-    let availableModules = ship.getAvailableModules();
+    let { fuelCapacity } = ship;
 
-    for (let i = 0, l = internal.length; i < l; i++) {
-      let s = internal[i];
-
+    for (const slot of ship.getInternals(undefined, true)) {
       slots.push(<InternalSlot
-        key={i}
-        maxClass={s.maxClass}
-        availableModules={() => availableModules.getInts(ship, s.maxClass, s.eligible)}
-        onOpen={this._openMenu.bind(this,s)}
-	onChange={this.props.onChange}
-        onSelect={this._selectModule.bind(this, s)}
-        selected={currentMenu == s}
-        eligible={s.eligible}
-        m={s.m}
-        drag={this._drag.bind(this, s)}
-        dragOver={this._dragOverSlot.bind(this, s)}
+        key={slot.object.Slot}
+        maxClass={slot.getSize()}
+        onOpen={this._openMenu.bind(this, slot)}
+        onChange={this.props.onChange}
+        onSelect={this._selectModule.bind(this, slot)}
+        selected={currentMenu == slot}
+        slot={slot}
+        drag={this._drag.bind(this, slot)}
+        dragOver={this._dragOverSlot.bind(this, slot)}
         drop={this._drop}
-        dropClass={this._dropClass(s, originSlot, targetSlot)}
+        dropClass={this._dropClass(slot, originSlot, targetSlot)}
         fuel={fuelCapacity}
         ship={ship}
-        enabled={s.enabled ? true : false}
+        enabled={slot.isEnabled()}
       />);
     }
 
@@ -268,10 +262,9 @@ export default class InternalSlotSection extends SlotSection {
         <li className='lc' tabIndex='0' onClick={this._fillWithEconomyClassCabins} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['pce'] = smRef}>{translate('pce')}</li>
         <li className='lc' tabIndex='0' onClick={this._fillWithBusinessClassCabins} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['pci'] = smRef}>{translate('pci')}</li>
         <li className='lc' tabIndex='0' onClick={this._fillWithFirstClassCabins} onKeyDown={ship.luxuryCabins ? '' : this._keyDown} ref={smRef => this.sectionRefArr['pcm'] = smRef}>{translate('pcm')}</li>
-	{ ship.luxuryCabins ? <li className='lc' tabIndex='0' onClick={this._fillWithLuxuryCabins} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['pcq'] = smRef}>{translate('pcq')}</li> : ''}
+        { ship.luxuryCabins ? <li className='lc' tabIndex='0' onClick={this._fillWithLuxuryCabins} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['pcq'] = smRef}>{translate('pcq')}</li> : ''}
         <li className='optional-hide' style={{ textAlign: 'center', marginTop: '1em' }}>{translate('PHRASE_ALT_ALL')}</li>
       </ul>
     </div>;
   }
-
 }

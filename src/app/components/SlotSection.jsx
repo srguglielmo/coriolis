@@ -5,19 +5,17 @@ import { wrapCtxMenu } from '../utils/UtilityFunctions';
 import { canMount } from '../utils/SlotFunctions';
 import { Equalizer } from '../components/SvgIcons';
 import cn from 'classnames';
+import { Ship } from 'ed-forge';
 const browser = require('detect-browser');
 
 /**
  * Abstract Slot Section
  */
 export default class SlotSection extends TranslatedComponent {
-
   static propTypes = {
-    ship: PropTypes.object.isRequired,
+    ship: PropTypes.instanceOf(Ship),
     onChange: PropTypes.func.isRequired,
-    onCargoChange: PropTypes.func.isRequired,
-    onFuelChange: PropTypes.func.isRequired,
-    code: PropTypes.string.isRequired,
+    // code: PropTypes.string.isRequired,
     togglePwr: PropTypes.func,
     sectionMenuRefs: PropTypes.object
   };
@@ -106,6 +104,7 @@ export default class SlotSection extends TranslatedComponent {
       this.sectionRefArr['ssHeadRef'].focus();
     }
   }
+
   /**
    * Open a menu
    * @param  {string} menu    Menu name
@@ -126,7 +125,7 @@ export default class SlotSection extends TranslatedComponent {
    * @param  {Object} m    Selected module
    */
   _selectModule(slot, m) {
-    this.props.ship.use(slot, m, false);
+    slot.setItem(m);
     this.props.onChange();
     this._close();
   }

@@ -15,36 +15,39 @@ export default class InternalSlot extends Slot {
   /**
    * Generate the slot contents
    * @param  {Object} m             Mounted Module
-   * @param  {Boolean} enabled      Slot enabled
    * @param  {Function} translate   Translate function
    * @param  {Object} formats       Localized Formats map
    * @param  {Object} u             Localized Units Map
    * @return {React.Component}      Slot contents
    */
-  _getSlotDetails(m, enabled, translate, formats, u) {
+  _getSlotDetails(m, translate, formats, u) {
     if (m) {
-      let classRating = m.class + m.rating;
+      let classRating = String(m.getSize()) + m.getRating();
       let { drag, drop, ship } = this.props;
       let { termtip, tooltip } = this.context;
-      let validMods = (Modifications.modules[m.grp] ? Modifications.modules[m.grp].modifications : []);
+      let validMods = m.getApplicableBlueprints();
       let showModuleResistances = Persist.showModuleResistances();
 
       // Modifications tooltip shows blueprint and grade, if available
-      let modTT = translate('modified');
-      if (m && m.blueprint && m.blueprint.name) {
-        modTT = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
-        if (m.blueprint.special && m.blueprint.special.id >= 0) {
-          modTT += ', ' + translate(m.blueprint.special.name);
-        }
-        modTT = (
-          <div>
-            <div>{modTT}</div>
-            {blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], null, m.grp, m)}
-          </div>
-        );
-      }
+      // let modTT = translate('modified');
+      // const blueprint = m.getBlueprint();
+      // const experimental = m.getExperimental();
+      // const grade = m.getGrade();
+      // if (blueprint) {
+      //   modTT = translate(blueprint) + ' ' + translate('grade') + ' ' + grade;
+      //   if (experimental) {
+      //     modTT += ', ' + translate(experimental);
+      //   }
+      //   modTT = (
+      //     <div>
+      //       <div>{modTT}</div>
+      //       {blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], m)}
+      //     </div>
+      //   );
+      // }
 
-      let mass = m.getMass() || m.cargo || m.fuel || 0;
+      let mass = m.get('mass') || m.get('cargo') || m.get('fuel') || 0;
+      const enabled = m.isEnabled();
 
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
@@ -53,7 +56,7 @@ export default class InternalSlot extends Slot {
           <div className={'r'}>{formats.round(mass)}{u.T}</div>
         </div>
         <div className={'cb'}>
-          { m.getOptMass() ? <div className={'l'}>{translate('optmass', 'sg')}: {formats.int(m.getOptMass())}{u.T}</div> : null }
+          {/* { m.getOptMass() ? <div className={'l'}>{translate('optmass', 'sg')}: {formats.int(m.getOptMass())}{u.T}</div> : null }
           { m.getMaxMass() ? <div className={'l'}>{translate('maxmass', 'sg')}: {formats.int(m.getMaxMass())}{u.T}</div> : null }
           { m.bins ? <div className={'l'}>{m.bins} <u>{translate('bins')}</u></div> : null }
           { m.bays ? <div className={'l'}>{translate('bays')}: {m.bays}</div> : null }
@@ -88,7 +91,7 @@ export default class InternalSlot extends Slot {
           { m.getHullReinforcement() ? <div className='l'>{translate('armour')}: {formats.int(m.getHullReinforcement() + ship.baseArmour * m.getModValue('hullboost') / 10000)}</div> : null }
           { m.getProtection() ? <div className='l'>{translate('protection')}: {formats.rPct(m.getProtection())}</div> : null }
           { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
-	  { m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+          { m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null } */}
         </div>
       </div>;
     } else {

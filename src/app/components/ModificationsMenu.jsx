@@ -85,7 +85,7 @@ export default class ModificationsMenu extends TranslatedComponent {
         });
         const close = this._blueprintSelected.bind(this, blueprintName, grade);
         const key = blueprintName + ':' + grade;
-        const tooltipContent = blueprintTooltip(translate, blueprint.grades[grade], Modifications.modules[m.grp].blueprints[blueprintName].grades[grade].engineers, m.grp);
+        const tooltipContent = blueprintTooltip(translate, blueprint.grades[grade]);
         if (classes.indexOf('active') >= 0) this.selectedModId = key;
         blueprintGrades.unshift(<li key={key} tabIndex="0" data-id={key} className={classes} style={{ width: '2em' }} onMouseOver={termtip.bind(null, tooltipContent)} onMouseOut={tooltip.bind(null, null)} onClick={close} onKeyDown={this._keyDown} ref={modItem => this.modItems[key] = modItem}>{grade}</li>);
       }
@@ -429,7 +429,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[m.blueprint.fdname].grades[m.blueprint.grade]) {
       blueprintLabel = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
       haveBlueprint = true;
-      blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[m.blueprint.fdname].grades[m.blueprint.grade].engineers, m.grp);
+      blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade]);
       blueprintCv = getPercent(m);
     }
 

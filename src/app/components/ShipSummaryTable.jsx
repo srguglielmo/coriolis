@@ -5,6 +5,12 @@ import cn from 'classnames';
 import { Warning } from './SvgIcons';
 import * as Calc from '../shipyard/Calculations';
 
+import { ShipProps } from 'ed-forge';
+const {
+  SPEED, JUMP_RANGE, TOTAL_RANGE, SHIELD_METRICS, ARMOUR_METRICS, MODULE_ARMOUR,
+  MODULE_PROTECTION
+} = ShipProps;
+
 /**
  * Ship Summary Table / Stats
  */
@@ -12,10 +18,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
 
   static propTypes = {
     ship: PropTypes.object.isRequired,
-    cargo: PropTypes.number.isRequired,
-    fuel: PropTypes.number.isRequired,
     marker: PropTypes.string.isRequired,
-    pips: PropTypes.object.isRequired
   };
 
   /**
@@ -35,14 +38,14 @@ export default class ShipSummaryTable extends TranslatedComponent {
    * @return {React.Component} Summary table
    */
   render() {
-    const { ship, cargo, fuel, pips } = this.props;
+    const { ship } = this.props;
     let { language, tooltip, termtip } = this.context;
     let translate = language.translate;
     let u = language.units;
     let formats = language.formats;
     let { time, int, round, f1, f2 } = formats;
     let hide = tooltip.bind(null, null);
-    const shieldGenerator = ship.findInternalByGroup('sg') || ship.findInternalByGroup('psg');
+    const shieldGenerator = ship.getShieldGenerator();
     const sgClassNames = cn({ warning: shieldGenerator && !ship.shield, muted: !shieldGenerator });
     const sgTooltip = shieldGenerator ? 'TT_SUMMARY_SHIELDS' : 'TT_SUMMARY_SHIELDS_NONFUNCTIONAL';
     const timeToDrain = Calc.timeToDrainWep(ship, 4);
@@ -64,15 +67,19 @@ export default class ShipSummaryTable extends TranslatedComponent {
     this.state = {
       shieldColour
     };
+
+    let speed = ship.get(SPEED);
+    let jumpRange = ship.get(JUMP_RANGE);
+
     return <div id='summary'>
       <div style={{display: "table", width: "100%"}}>
         <div style={{display: "table-row"}}>
           <table className={'summaryTable'}>
             <thead>
               <tr className='main'>
-                <th rowSpan={2} className={ cn({ 'bg-warning-disabled': !canThrust }) }>{translate('speed')}</th>
+                <th rowSpan={2} className={ cn({ 'bg-warning-disabled': speed == 0 }) }>{translate('speed')}</th>
                 <th rowSpan={2} className={ cn({ 'bg-warning-disabled': !canBoost }) }>{translate('boost')}</th>
-                <th colSpan={5} className={ cn({ 'bg-warning-disabled': !canJump }) }>{translate('jump range')}</th>
+                <th colSpan={5} className={ cn({ 'bg-warning-disabled': jumpRange == 0 }) }>{translate('jump range')}</th>
                 <th rowSpan={2}>{translate('shield')}</th>
                 <th rowSpan={2}>{translate('integrity')}</th>
                 <th rowSpan={2}>{translate('DPS')}</th>

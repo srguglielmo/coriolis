@@ -5,12 +5,12 @@ import StandardSlot from './StandardSlot';
 import Module from '../shipyard/Module';
 import * as ShipRoles from '../shipyard/ShipRoles';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
+import { ShipProps } from 'ed-forge';
 
 /**
  * Standard Slot section
  */
 export default class StandardSlotSection extends SlotSection {
-
   /**
    * Constructor
    * @param  {Object} props   React Component properties
@@ -39,8 +39,6 @@ export default class StandardSlotSection extends SlotSection {
     this.selectedRefId = 'maxjump';
     this.props.ship.useLightestStandard();
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -54,8 +52,6 @@ export default class StandardSlotSection extends SlotSection {
     if (bulkheadIndex === 2) this.selectedRefId = 'combat';
     ShipRoles.multiPurpose(this.props.ship, shielded, bulkheadIndex);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -67,8 +63,6 @@ export default class StandardSlotSection extends SlotSection {
     this.selectedRefId = 'trader';
     ShipRoles.trader(this.props.ship, shielded);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -80,8 +74,6 @@ export default class StandardSlotSection extends SlotSection {
     this.selectedRefId = 'miner';
     ShipRoles.miner(this.props.ship, shielded);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -94,8 +86,6 @@ export default class StandardSlotSection extends SlotSection {
     if (planetary) this.selectedRefId = 'planetary';
     ShipRoles.explorer(this.props.ship, planetary);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -106,8 +96,6 @@ export default class StandardSlotSection extends SlotSection {
     this.selectedRefId = 'racer';
     ShipRoles.racer(this.props.ship);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
     this._close();
   }
 
@@ -134,105 +122,114 @@ export default class StandardSlotSection extends SlotSection {
    * @return {Array} Array of Slots
    */
   _getSlots() {
-    let { ship, currentMenu, cargo, fuel } = this.props;
+    let { ship, currentMenu } = this.props;
     let slots = new Array(8);
     let open = this._openMenu;
     let select = this._selectModule;
-    let st = ship.standard;
-    let avail = ship.getAvailableModules().standard;
-    let bh = ship.bulkheads;
+    // let st = ship.standard;
+    // let avail = ship.getAvailableModules().standard;
+    // let bh = ship.bulkheads;
 
+    let armour = ship.getAlloys();
     slots[0] = <StandardSlot
       key='bh'
-      slot={bh}
-      modules={ship.getAvailableModules().bulkheads}
-      onOpen={open.bind(this, bh)}
+      slot={armour}
+      modules={armour.getApplicableItems()}
+      onOpen={open.bind(this, armour)}
       onSelect={this._selectBulkhead}
-      selected={currentMenu == bh}
+      selected={currentMenu == armour}
       onChange={this.props.onChange}
       ship={ship}
     />;
 
+    const powerPlant = ship.getPowerPlant();
     slots[1] = <StandardSlot
       key='pp'
-      slot={st[0]}
-      modules={avail[0]}
-      onOpen={open.bind(this, st[0])}
-      onSelect={select.bind(this, st[0])}
-      selected={currentMenu == st[0]}
+      slot={powerPlant}
+      modules={powerPlant.getApplicableItems()}
+      onOpen={open.bind(this, powerPlant)}
+      onSelect={select.bind(this, powerPlant)}
+      selected={currentMenu == powerPlant}
       onChange={this.props.onChange}
       ship={ship}
-      warning={m => m instanceof Module ? m.getPowerGeneration() < ship.powerRetracted : m.pgen < ship.powerRetracted}
+      warning={m => ship.get(ShipProps.CONSUMED_RETR) < m.get('powercapacity')}
     />;
 
+    const thrusters = ship.getThrusters();
     slots[2] = <StandardSlot
       key='th'
-      slot={st[1]}
-      modules={avail[1]}
-      onOpen={open.bind(this, st[1])}
-      onSelect={select.bind(this, st[1])}
-      selected={currentMenu == st[1]}
+      slot={thrusters}
+      modules={thrusters.getApplicableItems()}
+      onOpen={open.bind(this, thrusters)}
+      onSelect={select.bind(this, thrusters)}
+      selected={currentMenu == thrusters}
       onChange={this.props.onChange}
       ship={ship}
-      warning={m => m instanceof Module ? m.getMaxMass() < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass) : m.maxmass < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass)}
+      warning={m => m.get('enginemaximalmass') < ship.get(ShipProps.LADEN_MASS)}
     />;
 
 
+    const fsd = ship.getFSD();
     slots[3] = <StandardSlot
       key='fsd'
-      slot={st[2]}
-      modules={avail[2]}
-      onOpen={open.bind(this, st[2])}
-      onSelect={select.bind(this, st[2])}
+      slot={fsd}
+      modules={fsd.getApplicableItems()}
+      onOpen={open.bind(this, fsd)}
+      onSelect={select.bind(this, fsd)}
       onChange={this.props.onChange}
       ship={ship}
-      selected={currentMenu == st[2]}
+      selected={currentMenu == fsd}
     />;
 
+    const lifeSupport = ship.getLifeSupport();
     slots[4] = <StandardSlot
       key='ls'
-      slot={st[3]}
-      modules={avail[3]}
-      onOpen={open.bind(this, st[3])}
-      onSelect={select.bind(this, st[3])}
+      slot={lifeSupport}
+      modules={lifeSupport.getApplicableItems()}
+      onOpen={open.bind(this, lifeSupport)}
+      onSelect={select.bind(this, lifeSupport)}
       onChange={this.props.onChange}
       ship={ship}
-      selected={currentMenu == st[3]}
+      selected={currentMenu == lifeSupport}
     />;
 
+    const powerDistributor = ship.getPowerDistributor();
     slots[5] = <StandardSlot
       key='pd'
-      slot={st[4]}
-      modules={avail[4]}
-      onOpen={open.bind(this, st[4])}
-      onSelect={select.bind(this, st[4])}
-      selected={currentMenu == st[4]}
+      slot={powerDistributor}
+      modules={powerDistributor.getApplicableItems()}
+      onOpen={open.bind(this, powerDistributor)}
+      onSelect={select.bind(this, powerDistributor)}
+      selected={currentMenu == powerDistributor}
       onChange={this.props.onChange}
       ship={ship}
       warning={m => m instanceof Module ? m.getEnginesCapacity() <= ship.boostEnergy : m.engcap <= ship.boostEnergy}
     />;
 
+    const sensors = ship.getSensors();
     slots[6] = <StandardSlot
       key='ss'
-      slot={st[5]}
-      modules={avail[5]}
-      onOpen={open.bind(this, st[5])}
-      onSelect={select.bind(this, st[5])}
-      selected={currentMenu == st[5]}
+      slot={sensors}
+      modules={sensors.getApplicableItems()}
+      onOpen={open.bind(this, sensors)}
+      onSelect={select.bind(this, sensors)}
+      selected={currentMenu == sensors}
       onChange={this.props.onChange}
       ship={ship}
     />;
 
+    const fuelTank = ship.getCoreFuelTank();
     slots[7] = <StandardSlot
       key='ft'
-      slot={st[6]}
-      modules={avail[6]}
-      onOpen={open.bind(this, st[6])}
-      onSelect={select.bind(this, st[6])}
-      selected={currentMenu == st[6]}
+      slot={fuelTank}
+      modules={fuelTank.getApplicableItems()}
+      onOpen={open.bind(this, fuelTank)}
+      onSelect={select.bind(this, fuelTank)}
+      selected={currentMenu == fuelTank}
       onChange={this.props.onChange}
       ship={ship}
-      warning= {m => m.fuel < st[2].m.maxfuel}  // Show warning when fuel tank is smaller than FSD Max Fuel
+      // Show warning when fuel tank is smaller than FSD Max Fuel
+      warning= {m => m.get('fuel') < fsd.get('maxfuel')}
     />;
 
     return slots;
@@ -261,5 +258,4 @@ export default class StandardSlotSection extends SlotSection {
       </ul>
     </div>;
   }
-
 }

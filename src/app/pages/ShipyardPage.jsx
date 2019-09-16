@@ -1,20 +1,10 @@
 import React from 'react';
 import Page from './Page';
-import { Ships } from 'coriolis-data/dist';
 import cn from 'classnames';
-import Ship from '../shipyard/Ship';
+import { Factory } from 'ed-forge';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { SizeMap } from '../shipyard/Constants';
 import Link from '../components/Link';
-
-/**
- * Counts the hardpoints by class/size
- * @param  {Object} slot Hardpoint Slot model
- */
-function countHp(slot) {
-  this.hp[slot.maxClass]++;
-  this.hpCount++;
-}
 
 /**
  * Counts the internal slots and aggregated properties
@@ -53,50 +43,55 @@ function countInt(slot) {
 /**
  * Generate Ship summary and aggregated properties
  * @param  {String} shipId   Ship Id
- * @param  {Object} shipData Ship Default Data
  * @return {Object}          Ship summary and aggregated properties
  */
-function shipSummary(shipId, shipData) {
+function shipSummary(shipId) {
+  // Build Ship
+  let ship = Factory.newShip(shipId);
+
   let summary = {
     id: shipId,
     hpCount: 0,
     intCount: 0,
-    beta: shipData.beta,
     maxCargo: 0,
     maxPassengers: 0,
     hp: [0, 0, 0, 0, 0], // Utility, Small, Medium, Large, Huge
     int: [0, 0, 0, 0, 0, 0, 0, 0], // Sizes 1 - 8
-    standard: shipData.slots.standard,
+    standard: ship.readMeta('coreSizes'),
     agility:
-      shipData.properties.pitch +
-      shipData.properties.yaw +
-      shipData.properties.roll
+      ship.getBaseProperty('pitch') +
+      ship.getBaseProperty('yaw') +
+      ship.getBaseProperty('roll')
   };
-  Object.assign(summary, shipData.properties);
-  let ship = new Ship(shipId, shipData.properties, shipData.slots);
 
-  // Build Ship
-  ship.buildWith(shipData.defaults); // Populate with stock/default components
-  ship.hardpoints.forEach(countHp.bind(summary)); // Count Hardpoints by class
-  ship.internal.forEach(countInt.bind(summary)); // Count Internal Compartments by class
-  summary.retailCost = ship.totalCost; // Record Stock/Default/retail cost
-  ship.optimizeMass({ pd: '1D' }); // Optimize Mass with 1D PD for maximum possible jump range
-  summary.maxJumpRange = ship.unladenRange; // Record Jump Range
+  // Count Hardpoints by class
+  ship.getHardpoints(undefined, true).forEach(hardpoint => {
+    summary.hp[hardpoint.getSize()]++;
+    summary.hpCount++;
+  });
+  // Count Internal Compartments by class
+  ship.getInternals(undefined, true).forEach(internal => {
+    summary.int[internal.getSize()]++;
+    summary.intCount++;
+  });
+  summary.retailCost = ship.readMeta('retailCost'); // Record Stock/Default/retail cost
+  // ship.optimizeMass({ pd: '1D' }); // Optimize Mass with 1D PD for maximum possible jump range
+  summary.maxJumpRange = -1; // ship.unladenRange; // Record Jump Range
 
   // Best thrusters
-  let th;
-  if (ship.standard[1].maxClass === 3) {
-    th = 'tz';
-  } else if (ship.standard[1].maxClass === 2) {
-    th = 'u0';
-  } else {
-    th = ship.standard[1].maxClass + 'A';
-  }
+  // let th;
+  // if (ship.standard[1].maxClass === 3) {
+  //   th = 'tz';
+  // } else if (ship.standard[1].maxClass === 2) {
+  //   th = 'u0';
+  // } else {
+  //   th = ship.standard[1].maxClass + 'A';
+  // }
 
-  ship.optimizeMass({ th, fsd: '2D', ft: '1C' }); // Optmize mass with Max Thrusters
-  summary.topSpeed = ship.topSpeed;
-  summary.topBoost = ship.topBoost;
-  summary.baseArmour = ship.armour;
+  // ship.optimizeMass({ th, fsd: '2D', ft: '1C' }); // Optmize mass with Max Thrusters
+  summary.topSpeed = -1; // ship.topSpeed;
+  summary.topBoost = -1; // ship.topBoost;
+  summary.baseArmour = -1; // ship.armour;
 
   return summary;
 }
@@ -117,8 +112,8 @@ export default class ShipyardPage extends Page {
 
     if (!ShipyardPage.cachedShipSummaries) {
       ShipyardPage.cachedShipSummaries = [];
-      for (let s in Ships) {
-        ShipyardPage.cachedShipSummaries.push(shipSummary(s, Ships[s]));
+      for (let s of Factory.getAllShipTypes()) {
+        ShipyardPage.cachedShipSummaries.push(shipSummary(s));
       }
     }
 
@@ -335,7 +330,7 @@ export default class ShipyardPage extends Page {
           onClick={() => this._toggleCompare(s.id)}
         >
           <td className="le">
-            <Link href={'/outfit/' + s.id}>{s.name} {s.beta === true ? '(Beta)' : null}</Link>
+            <Link href={'/outfit/' + s.id}>{s.id} {s.beta === true ? '(Beta)' : null}</Link>
           </td>
         </tr>
       );

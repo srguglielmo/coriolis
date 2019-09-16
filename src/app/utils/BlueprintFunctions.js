@@ -66,12 +66,10 @@ export function specialToolTip(translate, blueprint, grp, m, specialName) {
  * Generate a tooltip with details of a blueprint's effects
  * @param   {Object}  translate   The translate object
  * @param   {Object}  blueprint   The blueprint at the required grade
- * @param   {Array}   engineers   The engineers supplying this blueprint
- * @param   {string}  grp         The group of the module
  * @param   {Object}  m           The module to compare with
  * @returns {Object}              The react components
  */
-export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
+export function blueprintTooltip(translate, blueprint, m) {
   const effects = [];
   if (!blueprint || !blueprint.features) {
     return undefined;
@@ -105,7 +103,7 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
         const currentIsBeneficial  = isValueBeneficial(feature, current);
         effects.push(
           <tr key={feature}>
-            <td style={{ textAlign: 'left' }}>{translate(feature, grp)}</td>
+            <td style={{ textAlign: 'left' }}>{translate(feature)}</td>
             <td className={lowerBound === 0 ? '' : lowerIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{lowerBound}{symbol}</td>
             <td className={current === 0 ? '' : currentIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{current}{symbol}</td>
             <td className={upperBound === 0 ? '' : upperIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{upperBound}{symbol}</td>
@@ -115,7 +113,7 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
         // We do not have a module, no value
         effects.push(
           <tr key={feature}>
-            <td style={{ textAlign: 'left' }}>{translate(feature, grp)}</td>
+            <td style={{ textAlign: 'left' }}>{translate(feature)}</td>
             <td className={lowerBound === 0 ? '' : lowerIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{lowerBound}{symbol}</td>
             <td className={upperBound === 0 ? '' : upperIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{upperBound}{symbol}</td>
           </tr>
@@ -144,7 +142,7 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
           const currentIsBeneficial  = isValueBeneficial(feature, current);
           effects.push(
             <tr key={feature}>
-              <td style={{ textAlign: 'left' }}>{translate(feature, grp)}</td>
+              <td style={{ textAlign: 'left' }}>{translate(feature)}</td>
               <td>&nbsp;</td>
               <td className={current === 0 ? '' : currentIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{current}{symbol}</td>
               <td>&nbsp;</td>
@@ -175,7 +173,7 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
             const currentIsBeneficial  = isValueBeneficial(feature, current);
             effects.push(
               <tr key={feature}>
-                <td style={{ textAlign: 'left' }}>{translate(feature, grp)}</td>
+                <td style={{ textAlign: 'left' }}>{translate(feature)}</td>
                 <td>&nbsp;</td>
                 <td className={current === 0 ? '' : currentIsBeneficial ? 'secondary' : 'warning'} style={{ textAlign: 'right' }}>{current}{symbol}</td>
                 <td>&nbsp;</td>
@@ -200,17 +198,18 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
     }
   }
 
-  let engineersList;
-  if (engineers) {
-    engineersList = [];
-    for (const engineer of engineers) {
-      engineersList.push(
-        <tr key={engineer}>
-          <td style={{ textAlign: 'left' }}>{engineer}</td>
-        </tr>
-      );
-    }
-  }
+  let engineersList = [];
+  // TODO:
+  // if (engineers) {
+  //   engineersList = [];
+  //   for (const engineer of engineers) {
+  //     engineersList.push(
+  //       <tr key={engineer}>
+  //         <td style={{ textAlign: 'left' }}>{engineer}</td>
+  //       </tr>
+  //     );
+  //   }
+  // }
 
   return (
     <div>
@@ -285,7 +284,7 @@ export function isValueBeneficial(feature, value) {
  * Is the change as shown beneficial?
  * @param {string} feature The name of the feature
  * @param {number} value The value of the feature as percentage change
- * @returns True if the value is beneficial
+ * @returns {boolean} True if the value is beneficial
  */
 export function isChangeValueBeneficial(feature, value) {
   let changeHigherBetter = STATS_FORMATTING[feature].higherbetter;

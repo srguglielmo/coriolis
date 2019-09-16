@@ -122,7 +122,6 @@ const CATEGORIES = {
  */
 export default class AvailableModulesMenu extends TranslatedComponent {
   static propTypes = {
-    modules: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
     onSelect: PropTypes.func.isRequired,
     diffDetails: PropTypes.func,
     m: PropTypes.object,
@@ -155,7 +154,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   _initState(props, context) {
     let translate = context.language.translate;
-    let { m, warning, onSelect, modules, ship } = props;
+    let { m, warning, onSelect, ship } = props;
     let list, currentGroup;
 
     let buildGroup = this._buildGroup.bind(
@@ -170,6 +169,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       }
     );
     let fuzzy = [];
+    let modules = m.getApplicableItems();
     if (modules instanceof Array) {
       list = buildGroup(modules[0].grp, modules);
     } else {

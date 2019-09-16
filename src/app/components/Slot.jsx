@@ -6,22 +6,19 @@ import AvailableModulesMenu from './AvailableModulesMenu';
 import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
+import { Ship, Module } from 'ed-forge';
+import { REG_MILITARY_SLOT } from 'ed-forge/lib/data/slots';
 
 /**
  * Abstract Slot
  */
 export default class Slot extends TranslatedComponent {
-
   static propTypes = {
-    availableModules: PropTypes.func.isRequired,
     onSelect: PropTypes.func.isRequired,
     onOpen: PropTypes.func.isRequired,
-    maxClass: PropTypes.number.isRequired,
     selected: PropTypes.bool,
-    m: PropTypes.object,
-    enabled: PropTypes.bool.isRequired,
-    ship: PropTypes.object.isRequired,
-    eligible: PropTypes.object,
+    slot: PropTypes.instanceOf(Module),
+    ship: PropTypes.instanceOf(Ship),
     warning: PropTypes.func,
     drag: PropTypes.func,
     drop: PropTypes.func,
@@ -61,7 +58,7 @@ export default class Slot extends TranslatedComponent {
    * @return {string} label
    */
   _getMaxClassLabel() {
-    return this.props.maxClass;
+    return this.props.slot.getSize();
   }
 
   /**
@@ -97,7 +94,7 @@ export default class Slot extends TranslatedComponent {
   render() {
     let language = this.context.language;
     let translate = language.translate;
-    let { ship, m, enabled, dropClass, dragOver, onOpen, onChange, selected, eligible, onSelect, warning, availableModules } = this.props;
+    let { ship, slot, dropClass, dragOver, onOpen, onChange, selected, onSelect, warning } = this.props;
     let slotDetails, modificationsMarker, menu;
 
     if (!selected) {
@@ -105,36 +102,37 @@ export default class Slot extends TranslatedComponent {
       this._modificationsSelected = false;
     }
 
-    if (m) {
-      slotDetails = this._getSlotDetails(m, enabled, translate, language.formats, language.units);  // Must be implemented by sub classes
-      modificationsMarker = JSON.stringify(m);
+    if (!slot.isEmpty()) {
+      slotDetails = this._getSlotDetails(slot, translate, language.formats, language.units);  // Must be implemented by sub classes
     } else {
-      slotDetails = <div className={'empty'}>{translate(eligible ? 'emptyrestricted' : 'empty')}</div>;
-      modificationsMarker = '';
+      slotDetails = <div className={'empty'}>
+        {translate(
+          slot.getSlot().match(REG_MILITARY_SLOT) ? 'emptyrestricted' : 'empty'
+        )}
+      </div>;
     }
 
     if (selected) {
-      if (this._modificationsSelected) {
-        menu = <ModificationsMenu
-          className={this._getClassNames()}
-          onChange={onChange}
-          ship={ship}
-          m={m}
-          marker={modificationsMarker}
-          modButton = {this.modButton}
-        />;
-      } else {
-        menu = <AvailableModulesMenu
-          className={this._getClassNames()}
-          modules={availableModules()}
-          m={m}
-          ship={ship}
-          onSelect={onSelect}
-          warning={warning}
-          diffDetails={diffDetails.bind(ship, this.context.language)}
-          slotDiv = {this.slotDiv}
-        />;
-      }
+      // if (this._modificationsSelected) {
+      //   menu = <ModificationsMenu
+      //     className={this._getClassNames()}
+      //     onChange={onChange}
+      //     ship={ship}
+      //     m={m}
+      //     marker={modificationsMarker}
+      //     modButton = {this.modButton}
+      //   />;
+      // } else {
+      menu = <AvailableModulesMenu
+        className={this._getClassNames()}
+        m={slot}
+        ship={ship}
+        onSelect={onSelect}
+        warning={warning}
+        diffDetails={diffDetails.bind(ship, this.context.language)}
+        slotDiv = {this.slotDiv}
+      />;
+      // }
     }
 
     // TODO: implement touch dragging
@@ -143,13 +141,12 @@ export default class Slot extends TranslatedComponent {
       <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
         <div className='details-container'>
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
-            {slotDetails}
+          {slotDetails}
   	  </div>
         {menu}
       </div>
     );
   }
-
 
   /**
    * Toggle the modifications flag when selecting the modifications icon

@@ -5,16 +5,14 @@ import { register } from 'register-service-worker';
 import { EventEmitter } from 'fbemitter';
 import { getLanguage } from './i18n/Language';
 import Persist from './stores/Persist';
+import { Ship } from 'ed-forge';
 
 import Announcement from './components/Announcement';
 import Header from './components/Header';
 import Tooltip from './components/Tooltip';
-import ModalExport from './components/ModalExport';
 import ModalHelp from './components/ModalHelp';
 import ModalImport from './components/ModalImport';
 import ModalPermalink from './components/ModalPermalink';
-import * as CompanionApiUtils from './utils/CompanionApiUtils';
-import * as JournalUtils from './utils/JournalUtils';
 import AboutPage from './pages/AboutPage';
 import NotFoundPage from './pages/NotFoundPage';
 import OutfittingPage from './pages/OutfittingPage';
@@ -22,7 +20,6 @@ import ComparisonPage from './pages/ComparisonPage';
 import ShipyardPage from './pages/ShipyardPage';
 import ErrorDetails from './pages/ErrorDetails';
 
-const zlib = require('pako');
 const request = require('superagent');
 
 /**
@@ -61,7 +58,6 @@ export default class Coriolis extends React.Component {
     this._onLanguageChange = this._onLanguageChange.bind(this);
     this._onSizeRatioChange = this._onSizeRatioChange.bind(this);
     this._keyDown = this._keyDown.bind(this);
-    this._importBuild = this._importBuild.bind(this);
 
     this.emitter = new EventEmitter();
     this.state = {
@@ -93,19 +89,10 @@ export default class Coriolis extends React.Component {
   _importBuild(r) {
     try {
       // Need to decode and gunzip the data, then build the ship
-      const data = zlib.inflate(new Buffer(r.params.data, 'base64'), { to: 'string' });
-      const json = JSON.parse(data);
-      console.info('Ship import data: ');
-      console.info(json);
-      let ship;
-      if (json && json.modules) {
-        ship = CompanionApiUtils.shipFromJson(json);
-      } else if (json && json.Modules) {
-        ship = JournalUtils.shipFromLoadoutJSON(json);
-      }
-      r.params.ship = ship.id;
-      r.params.code = ship.toString();
-      this._setPage(OutfittingPage, r)
+      let ship = new Ship(r.params.data);
+      r.params.ship = ship.getShipType();
+      r.params.code = ship.compress();
+      this._setPage(OutfittingPage, r);
     } catch (err) {
       this._onError('Failed to import ship', r.path, 0, 0, err);
     }

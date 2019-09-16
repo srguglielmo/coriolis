@@ -67,30 +67,24 @@ export default class UtilitySlotSection extends SlotSection {
   _getSlots() {
     let slots = [];
     let { ship, currentMenu } = this.props;
-    let hardpoints = ship.hardpoints;
     let { originSlot, targetSlot } = this.state;
-    let availableModules = ship.getAvailableModules();
 
-    for (let i = 0, l = hardpoints.length; i < l; i++) {
-      let h = hardpoints[i];
-      if (h.maxClass === 0) {
-        slots.push(<HardpointSlot
-          key={i}
-          maxClass={h.maxClass}
-          availableModules={() => availableModules.getHps(h.maxClass)}
-          onOpen={this._openMenu.bind(this,h)}
-          onSelect={this._selectModule.bind(this, h)}
-          onChange={this.props.onChange}
-          selected={currentMenu == h}
-          drag={this._drag.bind(this, h)}
-          dragOver={this._dragOverSlot.bind(this, h)}
-          drop={this._drop}
-          dropClass={this._dropClass(h, originSlot, targetSlot)}
-          ship={ship}
-          m={h.m}
-          enabled={h.enabled ? true : false}
-        />);
-      }
+    for (let h of ship.getUtilities(undefined, true)) {
+      slots.push(<HardpointSlot
+        key={h.object.Slot}
+        maxClass={h.getSize()}
+        onOpen={this._openMenu.bind(this,h)}
+        onSelect={this._selectModule.bind(this, h)}
+        onChange={this.props.onChange}
+        selected={currentMenu == h}
+        drag={this._drag.bind(this, h)}
+        dragOver={this._dragOverSlot.bind(this, h)}
+        drop={this._drop}
+        dropClass={this._dropClass(h, originSlot, targetSlot)}
+        ship={ship}
+        slot={h}
+        enabled={h.enabled ? true : false}
+      />);
     }
 
     return slots;
