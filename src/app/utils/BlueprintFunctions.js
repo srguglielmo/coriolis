@@ -156,7 +156,7 @@ export function blueprintTooltip(translate, blueprint, engineers, grp, m) {
 
     // We also add in any benefits from specials that aren't covered above
     if (m.blueprint && m.blueprint.special) {
-      for (const feature in Modifications.modifierActions[m.blueprint.special.edname]) {
+      for (const feature in Modifications.modifierActions[m.blueprint.special.key]) {
         if (!blueprint.features[feature] && !m.mods.feature) {
           const featureDef = Modifications.modifications[feature];
           if (featureDef && !featureDef.hidden) {

@@ -46,7 +46,7 @@ export default class Module {
 
     if ((!raw) && this.blueprint && this.blueprint.special) {
       // This module has a special effect, see if we need to alter our returned value
-      const modifierActions = Modifications.modifierActions[this.blueprint.special.edname];
+      const modifierActions = Modifications.modifierActions[this.blueprint.special.key];
       if (modifierActions && modifierActions[name]) {
         // this special effect modifies our returned value
         const modification = Modifications.modifications[name];
@@ -83,7 +83,7 @@ export default class Module {
     }
     if (valueiswithspecial && this.blueprint && this.blueprint.special) {
       // This module has a special effect, see if we need to alter the stored value
-      const modifierActions = Modifications.modifierActions[this.blueprint.special.edname];
+      const modifierActions = Modifications.modifierActions[this.blueprint.special.key];
       if (modifierActions && modifierActions[name]) {
         // This special effect modifies the value being set, so we need to revert it prior to storing the value
         const modification = Modifications.modifications[name];
@@ -816,7 +816,7 @@ export default class Module {
     if (clipSize) {
       // If auto-loader is applied, effective clip size will be nearly doubled
       // as you get one reload for every two shots fired.
-      if (this.blueprint && this.blueprint.special && this.blueprint.special.edname === 'special_auto_loader' && modified) {
+      if (this.blueprint && this.blueprint.special && this.blueprint.special.key === 'special_auto_loader' && modified) {
         clipSize += clipSize - 1;
       }
 

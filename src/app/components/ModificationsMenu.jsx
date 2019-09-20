@@ -178,7 +178,7 @@ export default class ModificationsMenu extends TranslatedComponent {
           continue;
         }
         const classes = cn('button-inline-menu', {
-          active: m.blueprint && m.blueprint.special && m.blueprint.special.edname == specialName
+          active: m.blueprint && m.blueprint.special && m.blueprint.special.key == specialName
         });
         if (classes.indexOf('active') >= 0) this.selectedSpecialId = specialName;
         const close = this._specialSelected.bind(this, specialName);
@@ -437,7 +437,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     let specialTt;
     if (m.blueprint && m.blueprint.special) {
       specialLabel = m.blueprint.special.name;
-      specialTt = specialToolTip(translate, m.blueprint.grades[m.blueprint.grade], m.grp, m, m.blueprint.special.edname);
+      specialTt = specialToolTip(translate, m.blueprint.grades[m.blueprint.grade], m.grp, m, m.blueprint.special.key);
     } else {
       specialLabel = translate('PHRASE_SELECT_SPECIAL');
     }
