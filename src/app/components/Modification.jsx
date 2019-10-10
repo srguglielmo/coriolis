@@ -3,22 +3,17 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import NumberEditor from 'react-number-editor';
-import { isChangeValueBeneficial } from '../utils/BlueprintFunctions';
-import { Modifications } from 'coriolis-data/dist';
+import { Module } from 'ed-forge';
 
 /**
  * Modification
  */
 export default class Modification extends TranslatedComponent {
   static propTypes = {
-    ship: PropTypes.object.isRequired,
-    m: PropTypes.object.isRequired,
-    name: PropTypes.string.isRequired,
-    value: PropTypes.number.isRequired,
+    m: PropTypes.instanceOf(Module).isRequired,
+    property: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired,
-    onKeyDown: PropTypes.func.isRequired,
-    modItems: PropTypes.array.isRequired,
-    handleModChange: PropTypes.func.isRequired
+    highlight: PropTypes.bool,
   };
 
   /**
@@ -28,47 +23,22 @@ export default class Modification extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
-    this.state = {};
-    this.state.value = props.value;
+    const { m, property } = props;
+    const originalValue = m.get(property);
+    this.state = { originalValue, value: String(originalValue) };
   }
 
   /**
-   * Update modification given a value.
-   * @param {Number} value The value to set.  This comes in as a string and must be stored in state as a string,
-   *                       because it needs to allow illegal 'numbers' ('-', '1.', etc) when the user is typing
-   *                       in a value by hand
-   */
-  _updateValue(value) {
-    this.setState({ value });
-    let reCast = String(Number(value));
-    if (reCast.endsWith(value) || reCast.startsWith(value)) {
-      let { m, name, ship } = this.props;
-      value = Math.max(Math.min(value, 50000), -50000);
-      ship.setModification(m, name, value, true, true);
-    }
-  }
-
-  /**
-   * Triggered when a key is pressed down with focus on the number editor.
-   * @param {SyntheticEvent} event Key down event
-   */
-  _keyDown(event) {
-    if (event.key == 'Enter') {
-      this._updateFinished();
-    }
-    this.props.onKeyDown(event);
-  }
-
-  /**
-   * Triggered when an update to slider value is finished i.e. when losing focus
-   *
-   * pnellesen (24/05/2018): added value check below - this should prevent experimental effects from being recalculated
-   * with each onBlur event, even when no change has actually been made to the field.
+   * Notify listeners that a new value has been entered and commited.
    */
   _updateFinished() {
-    if (this.props.value != this.state.value) {
-      this.props.handleModChange(true);
+    const { m, property } = this.props;
+    const { value, originalValue } = this.state;
+    const numValue = Number(value);
+    if (!isNaN(numValue) && originalValue !== numValue) {
+      m.set(property, numValue);
       this.props.onChange();
+      this.setState({ originalValue: numValue });
     }
   }
 
@@ -77,53 +47,59 @@ export default class Modification extends TranslatedComponent {
    * @return {React.Component} modification
    */
   render() {
-    let { translate, formats, units } = this.context.language;
-    let { m, name } = this.props;
-    let modValue = m.getChange(name);
-    let isOverwrite = Modifications.modifications[name].method === 'overwrite';
+    const { translate, formats } = this.context.language;
+    const { m, property, highlight } = this.props;
+    const { originalValue, value } = this.state;
 
-    if (name === 'damagedist') {
-      // We don't show damage distribution
+    // Some features only apply to specific modules; these features will be
+    // undefined on items that do not belong to the same class. Filter these
+    // features here
+    if (originalValue === undefined) {
       return null;
     }
 
-    let inputClassNames = {
-      'cb': true,
-      'greyed-out': !this.props.highlight
-    };
-
     return (
-      <div onBlur={this._updateFinished.bind(this)} key={name}
-        className={cn('cb', 'modification-container')}
-        ref={ modItem => this.props.modItems[name] = modItem }>
-        <span className={'cb'}>{translate(name, m.grp)}</span>
-        <span className={'header-adjuster'}></span>
+      <div onBlur={this._updateFinished.bind(this)} key={property}
+        className="cb modification-container"
+      >
+        <span className="cb">{translate(property)}</span>
+        <span className="header-adjuster"></span>
         <table style={{ width: '100%' }}>
           <tbody>
             <tr>
-              <td className={'input-container'}>
+              <td className="input-container">
                 <span>
-                  {this.props.editable ?
-                    <NumberEditor className={cn(inputClassNames)} value={this.state.value}
-                      decimals={2} style={{ textAlign: 'right' }} step={0.01}
-                      stepModifier={1} onKeyDown={this._keyDown.bind(this)}
-                      onValueChange={this._updateValue.bind(this)} /> :
-                    <input type="text" value={formats.f2(this.state.value)}
-                      disabled className={cn('number-editor', 'greyed-out')}
-                      style={{ textAlign: 'right', cursor: 'inherit' }}/>
-                  }
-                  <span className={'unit-container'}>
-                    {units[m.getStoredUnitFor(name)]}
-                  </span>
+                  <NumberEditor value={value} stepModifier={1}
+                    decimals={2} step={0.01} style={{ textAlign: 'right' }}
+                    className={cn(
+                      'cb',
+                      { 'greyed-out': !highlight },
+                    )}
+                    onKeyDown={(event) => {
+                      if (event.key == 'Enter') {
+                        this._updateFinished();
+                        event.stopPropagation();
+                      }
+                    }}
+                    onValueChange={(value) => {
+                      if (value.length <= 15) {
+                        this.setState({ value });
+                      }
+                    }} />
+                  {/* TODO: support unit */}
+                  <span className="unit-container">{/* unit */}</span>
                 </span>
               </td>
-              <td style={{ textAlign: 'center' }} className={
-                modValue ?
-                  isChangeValueBeneficial(name, modValue) ? 'secondary' : 'warning' :
-                  ''
-              }>
-                {formats.f2(modValue / 100) || 0}{isOverwrite ? '' : '%'}
-              </td>
+              <td style={{ textAlign: 'center' }}
+                className={cn({
+                  // TODO:
+                  // secondary: isBeneficial,
+                  // Is beneficial might be undefined; in this case we have a 0%
+                  // modifier. Check this here.
+                  // warning: isBeneficial === false,
+                })}
+              // TODO: support absolute modifiers
+              >{formats.pct(m.getModifier(property))}</td>
             </tr>
           </tbody>
         </table>

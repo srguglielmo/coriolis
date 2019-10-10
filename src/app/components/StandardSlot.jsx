@@ -89,11 +89,11 @@ export default class StandardSlot extends TranslatedComponent {
     if (selected) {
       if (this._modificationsSelected) {
         menu = <ModificationsMenu
-          className='standard'
+          className="standard"
           onChange={onChange}
           ship={ship}
           m={slot}
-          modButton = {this.modButton}
+          modButton={this.modButton}
         />;
       } else {
         menu = <AvailableModulesMenu

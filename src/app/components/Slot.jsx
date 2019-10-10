@@ -113,32 +113,34 @@ export default class Slot extends TranslatedComponent {
     }
 
     if (selected) {
-      // if (this._modificationsSelected) {
-      //   menu = <ModificationsMenu
-      //     className={this._getClassNames()}
-      //     onChange={onChange}
-      //     ship={ship}
-      //     m={m}
-      //     marker={modificationsMarker}
-      //     modButton = {this.modButton}
-      //   />;
-      // } else {
-      menu = <AvailableModulesMenu
-        className={this._getClassNames()}
-        m={slot}
-        ship={ship}
-        onSelect={onSelect}
-        warning={warning}
-        diffDetails={diffDetails.bind(ship, this.context.language)}
-        slotDiv = {this.slotDiv}
-      />;
-      // }
+      if (this._modificationsSelected) {
+        menu = <ModificationsMenu
+          className={this._getClassNames()}
+          onChange={onChange}
+          ship={ship}
+          m={slot}
+          modButton = {this.modButton}
+        />;
+      } else {
+        menu = <AvailableModulesMenu
+          className={this._getClassNames()}
+          m={slot}
+          ship={ship}
+          onSelect={onSelect}
+          warning={warning}
+          diffDetails={diffDetails.bind(ship, this.context.language)}
+          slotDiv = {this.slotDiv}
+        />;
+      }
     }
 
     // TODO: implement touch dragging
 
     return (
-      <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
+      <div className={cn('slot', dropClass, { selected })} onClick={onOpen}
+        onKeyDown={this._keyDown} onContextMenu={this._contextMenu}
+        onDragOver={dragOver} tabIndex="0"
+        ref={slotDiv => this.slotDiv = slotDiv}>
         <div className='details-container'>
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
           {slotDetails}

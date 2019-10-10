@@ -11,7 +11,6 @@ import { blueprintTooltip } from '../utils/BlueprintFunctions';
  * Internal Slot
  */
 export default class InternalSlot extends Slot {
-
   /**
    * Generate the slot contents
    * @param  {Object} m             Mounted Module
@@ -25,7 +24,6 @@ export default class InternalSlot extends Slot {
       let classRating = String(m.getSize()) + m.getRating();
       let { drag, drop, ship } = this.props;
       let { termtip, tooltip } = this.context;
-      let validMods = m.getApplicableBlueprints();
       let showModuleResistances = Persist.showModuleResistances();
 
       // Modifications tooltip shows blueprint and grade, if available
@@ -50,13 +48,34 @@ export default class InternalSlot extends Slot {
       const enabled = m.isEnabled();
 
       const className = cn('details', enabled ? '' : 'disabled');
-      return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
-        <div className={'cb'}>
-          <div className={'l'}>{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
-          <div className={'r'}>{formats.round(mass)}{u.T}</div>
-        </div>
-        <div className={'cb'}>
-          {/* { m.getOptMass() ? <div className={'l'}>{translate('optmass', 'sg')}: {formats.int(m.getOptMass())}{u.T}</div> : null }
+      return (
+        <div
+          className={className}
+          draggable="true"
+          onDragStart={drag}
+          onDragEnd={drop}
+        >
+          <div className={'cb'}>
+            <div className={'l'}>
+              {classRating} {translate(m.readMeta('type'))}
+              {m.mods && Object.keys(m.mods).length > 0 ? (
+                <span
+                  onMouseOver={termtip.bind(null, modTT)}
+                  onMouseOut={tooltip.bind(null, null)}
+                >
+                  <Modified />
+                </span>
+              ) : (
+                ''
+              )}
+            </div>
+            <div className={'r'}>
+              {formats.round(mass)}
+              {u.T}
+            </div>
+          </div>
+          <div className={'cb'}>
+            {/* { m.getOptMass() ? <div className={'l'}>{translate('optmass', 'sg')}: {formats.int(m.getOptMass())}{u.T}</div> : null }
           { m.getMaxMass() ? <div className={'l'}>{translate('maxmass', 'sg')}: {formats.int(m.getMaxMass())}{u.T}</div> : null }
           { m.bins ? <div className={'l'}>{m.bins} <u>{translate('bins')}</u></div> : null }
           { m.bays ? <div className={'l'}>{translate('bays')}: {m.bays}</div> : null }
@@ -90,10 +109,23 @@ export default class InternalSlot extends Slot {
           { showModuleResistances && m.getCausticResistance() ? <div className='l'>{translate('causres')}: {formats.pct(m.getCausticResistance())}</div> : null }
           { m.getHullReinforcement() ? <div className='l'>{translate('armour')}: {formats.int(m.getHullReinforcement() + ship.baseArmour * m.getModValue('hullboost') / 10000)}</div> : null }
           { m.getProtection() ? <div className='l'>{translate('protection')}: {formats.rPct(m.getProtection())}</div> : null }
-          { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
-          { m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null } */}
+          { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null } */}
+            {(m.getApplicableBlueprints() || []).length > 0 ? (
+              <div className="r"
+                ref={(modButton) => (this.modButton = modButton)}
+              >
+                <button onClick={this._toggleModifications.bind(this)}
+                  onContextMenu={stopCtxPropagation}
+                  onMouseOver={termtip.bind(null, 'modifications')}
+                  onMouseOut={tooltip.bind(null, null)}
+                >
+                  <ListModifications />
+                </button>
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>;
+      );
     } else {
       return <div className={'empty'}>{translate('empty')}</div>;
     }
