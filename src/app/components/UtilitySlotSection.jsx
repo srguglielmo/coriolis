@@ -1,6 +1,6 @@
 import React from 'react';
 import SlotSection from './SlotSection';
-import InternalSlot from './InternalSlot';
+import Slot from './Slot';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 
 /**
@@ -70,7 +70,7 @@ export default class UtilitySlotSection extends SlotSection {
     let { originSlot, targetSlot } = this.state;
 
     for (let h of ship.getUtilities(undefined, true)) {
-      slots.push(<InternalSlot
+      slots.push(<Slot
         key={h.object.Slot}
         maxClass={h.getSize()}
         onOpen={this._openMenu.bind(this,h)}

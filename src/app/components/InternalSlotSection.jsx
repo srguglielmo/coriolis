@@ -1,6 +1,6 @@
 import React from 'react';
 import SlotSection from './SlotSection';
-import InternalSlot from './InternalSlot';
+import Slot from './Slot';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { canMount } from '../utils/SlotFunctions';
@@ -223,7 +223,7 @@ export default class InternalSlotSection extends SlotSection {
     let { fuelCapacity } = ship;
 
     for (const slot of ship.getInternals(undefined, true)) {
-      slots.push(<InternalSlot
+      slots.push(<Slot
         key={slot.object.Slot}
         maxClass={slot.getSize()}
         onOpen={this._openMenu.bind(this, slot)}
