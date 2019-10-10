@@ -1,6 +1,6 @@
 import React from 'react';
 import SlotSection from './SlotSection';
-import HardpointSlot from './HardpointSlot';
+import InternalSlot from './InternalSlot';
 import { MountFixed, MountGimballed, MountTurret } from '../components/SvgIcons';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 
@@ -70,7 +70,7 @@ export default class HardpointSlotSection extends SlotSection {
     let slots = [];
 
     for (let h of ship.getHardpoints(undefined, true)) {
-      slots.push(<HardpointSlot
+      slots.push(<InternalSlot
         key={h.object.Slot}
         maxClass={h.getSize()}
         onOpen={this._openMenu.bind(this, h)}

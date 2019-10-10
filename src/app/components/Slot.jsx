@@ -7,7 +7,14 @@ import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
 import { Ship, Module } from 'ed-forge';
-import { REG_MILITARY_SLOT } from 'ed-forge/lib/data/slots';
+import { REG_MILITARY_SLOT, REG_HARDPOINT_SLOT } from 'ed-forge/lib/data/slots';
+
+const HARDPOINT_SLOT_LABELS = {
+  1: 'S',
+  2: 'M',
+  3: 'L',
+  4: 'H',
+};
 
 /**
  * Abstract Slot
@@ -58,7 +65,19 @@ export default class Slot extends TranslatedComponent {
    * @return {string} label
    */
   _getMaxClassLabel() {
-    return this.props.slot.getSize();
+    const { slot } = this.props;
+    let size = slot.getSize();
+    switch (true) {
+      case slot.getSlot() === 'armour':
+        return '';
+      case size === 0:
+        // This can also happen for armour but that case was handled above
+        return 'U';
+      case Boolean(slot.getSlot().match(REG_HARDPOINT_SLOT)):
+        return HARDPOINT_SLOT_LABELS[size];
+      default:
+        return size;
+    }
   }
 
   /**
