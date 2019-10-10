@@ -1,7 +1,7 @@
 import React from 'react';
 import cn from 'classnames';
 import SlotSection from './SlotSection';
-import StandardSlot from './StandardSlot';
+import InternalSlot from './InternalSlot';
 import Module from '../shipyard/Module';
 import * as ShipRoles from '../shipyard/ShipRoles';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -131,7 +131,7 @@ export default class StandardSlotSection extends SlotSection {
     // let bh = ship.bulkheads;
 
     let armour = ship.getAlloys();
-    slots[0] = <StandardSlot
+    slots[0] = <InternalSlot
       key='bh'
       slot={armour}
       modules={armour.getApplicableItems()}
@@ -143,7 +143,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const powerPlant = ship.getPowerPlant();
-    slots[1] = <StandardSlot
+    slots[1] = <InternalSlot
       key='pp'
       slot={powerPlant}
       modules={powerPlant.getApplicableItems()}
@@ -156,7 +156,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const thrusters = ship.getThrusters();
-    slots[2] = <StandardSlot
+    slots[2] = <InternalSlot
       key='th'
       slot={thrusters}
       modules={thrusters.getApplicableItems()}
@@ -170,7 +170,7 @@ export default class StandardSlotSection extends SlotSection {
 
 
     const fsd = ship.getFSD();
-    slots[3] = <StandardSlot
+    slots[3] = <InternalSlot
       key='fsd'
       slot={fsd}
       modules={fsd.getApplicableItems()}
@@ -182,7 +182,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const lifeSupport = ship.getLifeSupport();
-    slots[4] = <StandardSlot
+    slots[4] = <InternalSlot
       key='ls'
       slot={lifeSupport}
       modules={lifeSupport.getApplicableItems()}
@@ -194,7 +194,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const powerDistributor = ship.getPowerDistributor();
-    slots[5] = <StandardSlot
+    slots[5] = <InternalSlot
       key='pd'
       slot={powerDistributor}
       modules={powerDistributor.getApplicableItems()}
@@ -207,7 +207,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const sensors = ship.getSensors();
-    slots[6] = <StandardSlot
+    slots[6] = <InternalSlot
       key='ss'
       slot={sensors}
       modules={sensors.getApplicableItems()}
@@ -219,7 +219,7 @@ export default class StandardSlotSection extends SlotSection {
     />;
 
     const fuelTank = ship.getCoreFuelTank();
-    slots[7] = <StandardSlot
+    slots[7] = <InternalSlot
       key='ft'
       slot={fuelTank}
       modules={fuelTank.getApplicableItems()}

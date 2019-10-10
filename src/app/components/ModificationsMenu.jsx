@@ -305,6 +305,7 @@ export default class ModificationsMenu extends TranslatedComponent {
               m.resetEngineering();
               this.selectedModRef = null;
               this.selectedSpecialRef = null;
+              this.setState({ blueprintProgress: undefined });
             })}
             onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')}
             onMouseOut={tooltip.bind(null, null)}
@@ -361,11 +362,11 @@ export default class ModificationsMenu extends TranslatedComponent {
                     { active: blueprintProgress % 0.5 !== 0 },
                   )}
                   style={{ cursor: 'pointer' }}
-                  onClick={() => {
+                  onClick={this._change(() => {
                     const blueprintProgress = Math.random();
                     m.setBlueprintProgress(blueprintProgress);
                     this.setState({ blueprintProgress });
-                  }}
+                  })}
                   onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RANDOM')}
                   onMouseOut={tooltip.bind(null, null)}
                 >{translate('random')}</td>
