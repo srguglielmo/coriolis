@@ -144,6 +144,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
           };
         }
 
+        const mountSymbol = MOUNT_MAP[meta.mount];
         const li = (
           <li key={Item} data-id={Item}
             ref={Item === mountedModule.getItem() ? (ref) => { this.activeSlotRef = ref; } : undefined}
@@ -151,9 +152,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
               warning: !disabled && warningFunc && warningFunc(info),
               active: mountedModule.getItem() === Item,
               disabled,
+              hardpoint: mountSymbol,
             })}
             {...eventHandlers}
-          >{MOUNT_MAP[meta.mount]}{meta.class}{meta.rating}</li>
+          >{mountSymbol}{meta.class}{meta.rating}</li>
         );
 
         const tail = elems.pop();
