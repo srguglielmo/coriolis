@@ -18,10 +18,7 @@ import { getModuleInfo } from 'ed-forge/lib/data/items';
 export default class ModificationsMenu extends TranslatedComponent {
   static propTypes = {
     className: PropTypes.string,
-    ship: PropTypes.object.isRequired,
     m: PropTypes.object.isRequired,
-    onChange: PropTypes.func.isRequired,
-    modButton:PropTypes.object
   };
 
   /**
@@ -47,13 +44,11 @@ export default class ModificationsMenu extends TranslatedComponent {
 
   /**
    * Render the blueprints
-   * @param  {Object} props   React component properties
-   * @param  {Object} context React component context
    * @return {Object}         list: Array of React Components
    */
-  _renderBlueprints(props, context) {
-    const { m } = props;
-    const { language, tooltip, termtip } = context;
+  _renderBlueprints() {
+    const { m } = this.props;
+    const { language, tooltip, termtip } = this.context;
     const { translate } = language;
 
     const blueprints = [];
@@ -71,13 +66,13 @@ export default class ModificationsMenu extends TranslatedComponent {
             style={{ width: '2em' }}
             // onMouseOver={termtip.bind(null, tooltipContent)}
             // onMouseOut={tooltip.bind(null, null)}
-            onClick={this._change(() => {
+            onClick={() => {
               m.setBlueprint(blueprint, grade);
               this.setState({
                 blueprintMenuOpened: false,
                 specialMenuOpened: true,
               });
-            })}
+            }}
             ref={active ? (ref) => { this.selectedModRef = ref; } : undefined}
           >{grade}</li>
         );
@@ -102,9 +97,9 @@ export default class ModificationsMenu extends TranslatedComponent {
    * @param  {Object} context React component context
    * @return {Object}         list: Array of React Components
    */
-  _renderSpecials(props, context) {
-    const { m } = props;
-    const { language, tooltip, termtip } = context;
+  _renderSpecials() {
+    const { m } = this.props;
+    const { language, tooltip, termtip } = this.context;
     const translate = language.translate;
 
     const applied = m.getExperimental();
@@ -150,8 +145,7 @@ export default class ModificationsMenu extends TranslatedComponent {
   _mkModification(property, highlight) {
     const { m } = this.props;
     return <Modification key={property} highlight={highlight} m={m}
-      property={property} onChange={this._change()}
-    />;
+      property={property} value={m.get(property)} />;
   }
 
   /**
@@ -183,22 +177,6 @@ export default class ModificationsMenu extends TranslatedComponent {
   }
 
   /**
-   * Returns a callback that performs an action in form of a callback given as
-   * arguments and notifiers listeners.
-   * @param {function} cb Action to perform
-   * @returns {function} Change callback
-   */
-  _change(cb) {
-    return (...args) => {
-      this.context.tooltip(null);
-      if (cb) {
-        cb(...args);
-      }
-      this.props.onChange();
-    };
-  }
-
-  /**
    * Toggle the specials menu
    */
   _toggleSpecialsMenu() {
@@ -211,11 +189,11 @@ export default class ModificationsMenu extends TranslatedComponent {
    * @returns {function} Callback
    */
   _specialSelected(special) {
-    return this._change(() => {
+    return () => {
       const { m } = this.props;
       m.setExperimental(special);
       this.setState({ specialMenuOpened: false });
-    });
+    };
   }
 
   /**
@@ -230,14 +208,6 @@ export default class ModificationsMenu extends TranslatedComponent {
     } else if (this.selectedSpecialRef) {
       this.selectedSpecialRef.focus();
       return;
-    }
-  }
-  /**
-   * set focus to the modification menu icon after mod menu is unmounted.
-   */
-  componentWillUnmount() {
-    if (this.props.modButton) {
-      this.props.modButton.focus();
     }
   }
 
@@ -259,10 +229,10 @@ export default class ModificationsMenu extends TranslatedComponent {
     let renderComponents = [];
     switch (true) {
       case !appliedBlueprint || blueprintMenuOpened:
-        renderComponents = this._renderBlueprints(this.props, this.context);
+        renderComponents = this._renderBlueprints();
         break;
       case specialMenuOpened:
-        renderComponents = this._renderSpecials(this.props, this.context);
+        renderComponents = this._renderSpecials();
         break;
       default:
         // Since the first case didn't apply, there is a blueprint applied so
@@ -301,12 +271,12 @@ export default class ModificationsMenu extends TranslatedComponent {
           <div
             className="section-menu button-inline-menu warning"
             style={{ cursor: 'pointer' }}
-            onClick={this._change(() => {
+            onClick={() => {
               m.resetEngineering();
               this.selectedModRef = null;
               this.selectedSpecialRef = null;
               this.setState({ blueprintProgress: undefined });
-            })}
+            }}
             onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')}
             onMouseOut={tooltip.bind(null, null)}
           >{translate('reset')}</div>,
@@ -324,10 +294,10 @@ export default class ModificationsMenu extends TranslatedComponent {
                     'section-menu button-inline-menu',
                     { active: blueprintProgress === 0 },
                   )} style={{ cursor: 'pointer' }}
-                  onClick={this._change(() => {
+                  onClick={() => {
                     m.setBlueprintProgress(0);
                     this.setState({ blueprintProgress: 0 });
-                  })}
+                  }}
                   onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_WORST')}
                   onMouseOut={tooltip.bind(null, null)}
                 >{translate('0%')}</td>
@@ -336,10 +306,10 @@ export default class ModificationsMenu extends TranslatedComponent {
                     'section-menu button-inline-menu',
                     { active: blueprintProgress === 0.5 },
                   )} style={{ cursor: 'pointer' }}
-                  onClick={this._change(() => {
+                  onClick={() => {
                     m.setBlueprintProgress(0.5);
                     this.setState({ blueprintProgress: 0.5 });
-                  })}
+                  }}
                   onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_FIFTY')}
                   onMouseOut={tooltip.bind(null, null)}
                 >{translate('50%')}</td>
@@ -349,10 +319,10 @@ export default class ModificationsMenu extends TranslatedComponent {
                     { active: blueprintProgress === 1 },
                   )}
                   style={{ cursor: 'pointer' }}
-                  onClick={this._change(() => {
+                  onClick={() => {
                     m.setBlueprintProgress(1);
                     this.setState({ blueprintProgress: 1 });
-                  })}
+                  }}
                   onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_BEST')}
                   onMouseOut={tooltip.bind(null, null)}
                 >{translate('100%')}</td>
@@ -362,11 +332,11 @@ export default class ModificationsMenu extends TranslatedComponent {
                     { active: blueprintProgress % 0.5 !== 0 },
                   )}
                   style={{ cursor: 'pointer' }}
-                  onClick={this._change(() => {
+                  onClick={() => {
                     const blueprintProgress = Math.random();
                     m.setBlueprintProgress(blueprintProgress);
                     this.setState({ blueprintProgress });
-                  })}
+                  }}
                   onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RANDOM')}
                   onMouseOut={tooltip.bind(null, null)}
                 >{translate('random')}</td>

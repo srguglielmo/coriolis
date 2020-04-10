@@ -7,6 +7,7 @@ import Router from '../Router';
 import Persist from '../stores/Persist';
 import * as Utils from '../utils/UtilityFunctions';
 import { Factory, Ship } from 'ed-forge';
+import { STATE_EVENT, OBJECT_EVENT } from 'ed-forge/lib/Ship';
 import * as _ from 'lodash';
 import { toDetailedBuild } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
@@ -38,16 +39,7 @@ import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
 import ModalOrbis from '../components/ModalOrbis';
-
-/**
- * Document Title Generator
- * @param  {String} shipName  Ship Name
- * @param  {String} buildName Build Name
- * @return {String}           Document title
- */
-function getTitle(shipName, buildName) {
-  return buildName ? buildName : shipName;
-}
+import autoBind from 'auto-bind';
 
 /**
  * The Outfitting Page
@@ -60,13 +52,8 @@ export default class OutfittingPage extends Page {
    */
   constructor(props, context) {
     super(props, context);
-    // window.Perf = Perf;
+    autoBind(this);
     this.state = this._initState(props, context);
-    this._keyDown = this._keyDown.bind(this);
-    this._exportBuild = this._exportBuild.bind(this);
-    this._opponentUpdated = this._opponentUpdated.bind(this);
-    this._engagementRangeUpdated = this._engagementRangeUpdated.bind(this);
-    this._sectionMenuRefs = {};
   }
 
   /**
@@ -81,22 +68,30 @@ export default class OutfittingPage extends Page {
     let buildName = params.bn;
     let savedCode = Persist.getBuild(shipId, buildName);
     let code = params.code || savedCode;
-    let ship = code ? new Ship(code) : Factory.newShip(shipId); // Create a new Ship instance
-    code = ship.compress();
-
-    this._getTitle = getTitle.bind(this, ship.getShipType());
+    // Create a new Ship instance
+    const ship = code ? new Ship(code) : Factory.newShip(shipId);
+    ship.on(STATE_EVENT, this._shipUpdated);
+    ship.on(OBJECT_EVENT, this._shipUpdated);
 
     return {
       error: null,
-      title: this._getTitle(buildName),
       costTab: Persist.getCostTab() || 'costs',
       buildName,
       newBuildName: buildName,
-      shipId,
       ship,
-      code,
+      code: ship.compress(),
       savedCode,
     };
+  }
+
+  /**
+   * Get this pages title for the browser.
+   * @returns {string} Page title
+   */
+  _getTitle() {
+    const { buildName } = this.state;
+    const { translate } = this.context.language;
+    return buildName || translate(this.ship.getShipType());
   }
 
   /**
@@ -108,10 +103,12 @@ export default class OutfittingPage extends Page {
       newBuildName: event.target.value
     };
 
-    if (Persist.hasBuild(this.state.shipId, stateChanges.newBuildName)) {
+    const { ship } = this.state;
+    const shipId = ship.getShipType();
+    if (Persist.hasBuild(shipId, stateChanges.newBuildName)) {
       stateChanges.savedCode = Persist.getBuild(
-        this.state.shipId,
-        stateChanges.newBuildName
+        shipId,
+        stateChanges.newBuildName,
       );
     } else {
       stateChanges.savedCode = null;
@@ -124,9 +121,9 @@ export default class OutfittingPage extends Page {
    * Update the control part of the route
    */
   _updateRoute() {
-    const { ship, shipId, buildName } = this.state;
+    const { ship } = this.state;
     const code = ship.compress();
-    this._updateRoute(shipId, buildName, code);
+    this._setRoute();
     this.setState({ code });
   }
 
@@ -193,13 +190,14 @@ export default class OutfittingPage extends Page {
    * Save the current build
    */
   _saveBuild() {
-    const { ship, buildName, newBuildName, shipId } = this.state;
+    const { ship, buildName, newBuildName } = this.state;
+    const shipId = ship.getShipType();
 
     // If this is a stock ship the code won't be set, so ensure that we have it
     const code = this.state.code || ship.compress();
 
     Persist.saveBuild(shipId, newBuildName, code);
-    this._updateRoute(shipId, newBuildName, code);
+    this._setRoute();
 
     let opponent, opponentBuild, opponentSys, opponentEng, opponentWep;
     if (
@@ -232,7 +230,6 @@ export default class OutfittingPage extends Page {
       opponentSys,
       opponentEng,
       opponentWep,
-      title: this._getTitle(newBuildName)
     });
   }
 
@@ -240,11 +237,12 @@ export default class OutfittingPage extends Page {
    * Rename the current build
    */
   _renameBuild() {
-    const { code, buildName, newBuildName, shipId, ship } = this.state;
+    const { code, buildName, newBuildName, ship } = this.state;
+    const shipId = ship.getShipType();
     if (buildName != newBuildName && newBuildName.length) {
       Persist.deleteBuild(shipId, buildName);
       Persist.saveBuild(shipId, newBuildName, code);
-      this._updateRoute(shipId, newBuildName, code);
+      this._setRoute();
       this.setState({
         buildName: newBuildName,
         code,
@@ -265,20 +263,19 @@ export default class OutfittingPage extends Page {
    * Reset build to Stock/Factory defaults
    */
   _resetBuild() {
-    const { ship, shipId, buildName } = this.state;
+    let { ship } = this.state;
     // Rebuild ship
-    ship.buildWith(Ships[shipId].defaults);
-    // Reset controls
-    const code = ship.compress();
+    ship = Factory.newShip(ship.getShipType());
     // Update state, and refresh the ship
-    this._updateRoute(shipId, buildName, code);
+    this.setState({ ship, code: undefined }, () => this._setRoute());
   }
 
   /**
    * Delete the build
    */
   _deleteBuild() {
-    const { shipId, buildName } = this.state;
+    const { ship, buildName } = this.state;
+    const shipId = ship.getShipType();
     Persist.deleteBuild(shipId, buildName);
 
     let opponentBuild;
@@ -291,7 +288,7 @@ export default class OutfittingPage extends Page {
     } else {
       opponentBuild = this.state.opponentBuild;
     }
-    Router.go(outfitURL(this.state.shipId));
+    Router.go(outfitURL(shipId));
 
     this.setState({ opponentBuild });
   }
@@ -315,24 +312,24 @@ export default class OutfittingPage extends Page {
    * Called when the code for the ship has been updated, to synchronise the rest of the data
    */
   _codeUpdated() {
-    const { code, shipId, buildName } = this.state;
+    const { ship, code, buildName } = this.state;
+    const shipId = ship.getShipType();
 
-    this.setState({
-      ship: new Ship(code),
-    }, () => this._updateRoute(shipId, buildName, code));
+    this.setState(
+      { ship: new Ship(code), },
+      () => this._setRoute(),
+    );
   }
 
   /**
    * Called when the ship has been updated, to set the code and then update accordingly
    */
   _shipUpdated() {
-    let { ship, shipId, buildName } = this.state;
+    let { ship } = this.state;
     const code = ship.compress();
     // Only update the state if this really has been updated
     if (this.state.code != code) {
-      this.setState({ code }, () =>
-        this._updateRoute(shipId, buildName, code)
-      );
+      this.setState({ code }, () => this._setRoute());
     }
   }
 
@@ -342,8 +339,9 @@ export default class OutfittingPage extends Page {
    * @param  {string} buildName Current build name
    * @param  {string} code      Serialized ship 'code'
    */
-  _updateRoute(shipId, buildName, code) {
-    Router.replace(outfitURL(shipId, code, buildName));
+  _setRoute() {
+    const { ship, code, buildName } = this.state;
+    Router.replace(outfitURL(ship.getShipType(), code, buildName));
   }
 
   /**
@@ -463,30 +461,9 @@ export default class OutfittingPage extends Page {
         } = state,
         hide = tooltip.bind(null, null),
         menu = this.props.currentMenu,
-        shipUpdated = this._shipUpdated,
         canSave = (newBuildName || buildName) && code !== savedCode,
         canRename = buildName && newBuildName && buildName != newBuildName,
         canReload = savedCode && canSave;
-
-    // Code can be blank for a default loadout.  Prefix it with the ship name to ensure that changes in default ships is picked up
-    code = ship.name + (code || '');
-
-    // Markers are used to propagate state changes without requiring a deep comparison of the ship, as that takes a long time
-    // const _sStr = ship.getStandardString();
-    // const _iStr = ship.getInternalString();
-    // const _hStr = ship.getHardpointsString();
-    // const _pStr = `${ship.getPowerEnabledString()}${ship.getPowerPrioritiesString()}`;
-    // const _mStr = ship.getModificationsString();
-
-    // const standardSlotMarker = `${ship.name}${_sStr}${_pStr}${_mStr}${
-    //   ship.ladenMass
-    // }${cargo}${fuel}`;
-    // const internalSlotMarker = `${ship.name}${_iStr}${_pStr}${_mStr}`;
-    // const hardpointsSlotMarker = `${ship.name}${_hStr}${_pStr}${_mStr}`;
-    // const boostMarker = `${ship.canBoost(cargo, fuel)}`;
-    // const shipSummaryMarker = `${
-    //   ship.name
-    // }${_sStr}${_iStr}${_hStr}${_pStr}${_mStr}${ship.ladenMass}${cargo}${fuel}`;
 
     // const requirements = Ships[ship.id].requirements;
     // let requirementElements = [];
@@ -654,46 +631,11 @@ export default class OutfittingPage extends Page {
         </div>
 
         {/* Main tables */}
-        {/* <ShipSummaryTable
-          ship={ship}
-          marker={shipSummaryMarker}
-        /> */}
-        <StandardSlotSection
-          ship={ship}
-          // code={standardSlotMarker}
-          onChange={shipUpdated}
-          onCargoChange={this._cargoUpdated}
-          onFuelChange={this._fuelUpdated}
-          currentMenu={menu}
-          sectionMenuRefs={this._sectionMenuRefs}
-        />
-        <InternalSlotSection
-          ship={ship}
-          // code={internalSlotMarker}
-          onChange={shipUpdated}
-          onCargoChange={this._cargoUpdated}
-          onFuelChange={this._fuelUpdated}
-          currentMenu={menu}
-          sectionMenuRefs={this._sectionMenuRefs}
-        />
-        <HardpointSlotSection
-          ship={ship}
-          // code={hardpointsSlotMarker}
-          onChange={shipUpdated}
-          onCargoChange={this._cargoUpdated}
-          onFuelChange={this._fuelUpdated}
-          currentMenu={menu}
-          sectionMenuRefs={this._sectionMenuRefs}
-        />
-        <UtilitySlotSection
-          ship={ship}
-          // code={hardpointsSlotMarker}
-          onChange={shipUpdated}
-          onCargoChange={this._cargoUpdated}
-          onFuelChange={this._fuelUpdated}
-          currentMenu={menu}
-          sectionMenuRefs={this._sectionMenuRefs}
-        />
+        <ShipSummaryTable ship={ship} />
+        <StandardSlotSection ship={ship} currentMenu={menu} />
+        <InternalSlotSection ship={ship} currentMenu={menu} />
+        <HardpointSlotSection ship={ship} currentMenu={menu} />
+        <UtilitySlotSection ship={ship} currentMenu={menu} />
 
         {/* Control of ship and opponent */}
         {/* <div className="group quarter">

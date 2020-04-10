@@ -24,7 +24,6 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     onSelect: PropTypes.func.isRequired,
     diffDetails: PropTypes.func,
     m: PropTypes.object,
-    ship: PropTypes.object.isRequired,
     warning: PropTypes.func,
     slotDiv: PropTypes.object
   };
@@ -49,7 +48,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   _initState(props, context) {
     const { translate } = context.language;
-    const { m, warning, onSelect, ship } = props;
+    const { m } = props;
     const list = [], fuzzy = [];
     let currentGroup;
 
@@ -63,13 +62,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       list.push(
         <div key={'div-' + category} className="select-group cap">{catName}</div>,
         this._buildGroup(
-          ship,
           m,
-          warning,
-          (m, event) => {
-            this._hideDiff(event);
-            onSelect(m);
-          },
           category,
           infos,
         ),
@@ -91,15 +84,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
   /**
    * Generate React Components for Module Group
-   * @param  {Ship} ship            Ship the selection is for
    * @param  {Object} mountedModule Mounted Module
-   * @param  {Function} warningFunc Warning function
-   * @param  {function} onSelect    Select/Mount callback
    * @param  {String} category      Category key
    * @param  {Array} modules        Available modules
    * @return {React.Component}      Available Module Group contents
    */
-  _buildGroup(ship, mountedModule, warningFunc, onSelect, category, modules) {
+  _buildGroup(mountedModule, category, modules) {
+    const { warning } = this.props;
+    const ship = mountedModule.getShip();
     const classMapping = groupBy(modules, (info) => info.meta.class);
 
     const itemsPerClass = Math.max(
@@ -133,7 +125,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         let eventHandlers = {};
         if (!disabled) {
           const showDiff = this._showDiff.bind(this, mountedModule, info);
-          const select = onSelect.bind(null, info);
+          const select = (event) => {
+            this._hideDiff(event);
+            this.props.onSelect(Item);
+          };
 
           eventHandlers = {
             onMouseEnter: this._over.bind(this, showDiff),
@@ -149,7 +144,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
           <li key={Item} data-id={Item}
             ref={Item === mountedModule.getItem() ? (ref) => { this.activeSlotRef = ref; } : undefined}
             className={cn('c', {
-              warning: !disabled && warningFunc && warningFunc(info),
+              warning: !disabled && warning && warning(info),
               active: mountedModule.getItem() === Item,
               disabled,
               hardpoint: mountSymbol,
@@ -187,10 +182,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   _showDiff(mountedModule, hoveringModule, rect) {
     if (this.props.diffDetails) {
       this.touchTimeout = null;
-      this.context.tooltip(
-        this.props.diffDetails(hoveringModule, mountedModule),
-        rect,
-      );
+      // TODO:
+      // this.context.tooltip(
+      //   this.props.diffDetails(hoveringModule, mountedModule),
+      //   rect,
+      // );
     }
   }
 

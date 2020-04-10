@@ -6,6 +6,7 @@ import { canMount } from '../utils/SlotFunctions';
 import { Equalizer } from '../components/SvgIcons';
 import cn from 'classnames';
 import { Ship } from 'ed-forge';
+import autoBind from 'auto-bind';
 const browser = require('detect-browser');
 
 /**
@@ -14,36 +15,20 @@ const browser = require('detect-browser');
 export default class SlotSection extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.instanceOf(Ship),
-    onChange: PropTypes.func.isRequired,
-    // code: PropTypes.string.isRequired,
     togglePwr: PropTypes.func,
-    sectionMenuRefs: PropTypes.object
   };
 
   /**
    * Constructor
    * @param  {Object} props   React Component properties
-   * @param  {Object} context React Component context
-   * @param  {string} sectionId   Section DOM Id
    * @param  {string} sectionName Section name
    */
-  constructor(props, context, sectionId, sectionName) {
+  constructor(props, sectionName) {
     super(props);
-    this.sectionId = sectionId;
-    this.sectionName = sectionName;
-    this.ssHeadRef = null;
+    autoBind(this);
 
-    this.sectionRefArr = this.props.sectionMenuRefs[this.sectionId] = [];
-    this.sectionRefArr['selectedRef'] = null;
-    this._getSlots = this._getSlots.bind(this);
-    this._selectModule = this._selectModule.bind(this);
-    this._getSectionMenu = this._getSectionMenu.bind(this);
-    this._contextMenu = this._contextMenu.bind(this);
-    this._drop = this._drop.bind(this);
-    this._dragOverNone = this._dragOverNone.bind(this);
-    this._close = this._close.bind(this);
-    this._keyDown = this._keyDown.bind(this);
-    this._handleSectionFocus = this._handleSectionFocus.bind(this);
+    this.sectionName = sectionName;
+
     this.state = {};
   }
 
@@ -52,83 +37,6 @@ export default class SlotSection extends TranslatedComponent {
   //  _getSectionMenu()
   //  _contextMenu()
   //  componentDidUpdate(prevProps)
-
-  /**
-   * TODO: May either need to send the function to be triggered when Enter key is pressed, or else
-   * may need a separate keyDown handler for each subclass (StandardSlotSection, HardpointSlotSection, etc.)
-   * ex: _keyDown(_keyDownfn, event)
-   *
-   * @param {SyntheticEvent} event KeyDown event
-   */
-  _keyDown(event) {
-    if (event.key == 'Enter') {
-      event.stopPropagation();
-      if (event.currentTarget.nodeName === 'H1') {
-        this._openMenu(this.sectionName, event);
-      } else {
-        event.currentTarget.click();
-      }
-      return;
-    }
-    if (event.key == 'Tab') {
-      if (event.shiftKey) {
-        if ((event.currentTarget === this.sectionRefArr[this.firstRefId]) && this.sectionRefArr[this.lastRefId]) {
-          event.preventDefault();
-          this.sectionRefArr[this.lastRefId].focus();
-        }
-      } else {
-        if ((event.currentTarget === this.sectionRefArr[this.lastRefId]) &&  this.sectionRefArr[this.firstRefId]) {
-          event.preventDefault();
-          this.sectionRefArr[this.firstRefId].focus();
-        }
-      }
-    }
-  }
-
-  /**
-   * Set focus on appropriate Slot Section Menu element
-   * @param {Object} focusPrevProps prevProps for componentDidUpdate() from ...SlotSection.jsx
-   * @param {String} firstRef id of the first ref in ...SlotSection.jsx
-   * @param {String} lastRef id of the last ref in ...SlotSection.jsx
-   *
-   */
-  _handleSectionFocus(focusPrevProps, firstRef, lastRef) {
-    if (this.selectedRefId !== null && this.sectionRefArr[this.selectedRefId]) {
-      // set focus on the previously selected option for the currently open section menu
-      this.sectionRefArr[this.selectedRefId].focus();
-    } else if (this.sectionRefArr[firstRef] && this.sectionRefArr[firstRef] != null) {
-      // set focus on the first option in the currently open section menu if none have been selected previously
-      this.sectionRefArr[firstRef].focus();
-    }  else if (this.props.currentMenu == null && focusPrevProps.currentMenu == this.sectionName && this.sectionRefArr['ssHeadRef']) {
-      // set focus on the section menu header when section menu is closed
-      this.sectionRefArr['ssHeadRef'].focus();
-    }
-  }
-
-  /**
-   * Open a menu
-   * @param  {string} menu    Menu name
-   * @param  {SyntheticEvent} event Event
-   */
-  _openMenu(menu, event) {
-    event.preventDefault();
-    event.stopPropagation();
-    if (this.props.currentMenu === menu) {
-      menu = null;
-    }
-    this.context.openMenu(menu);
-  }
-
-  /**
-   * Mount/Use the specified module in the slot
-   * @param  {Object} slot Slot
-   * @param  {Object} m    Selected module
-   */
-  _selectModule(slot, m) {
-    slot.setItem(m);
-    this.props.onChange();
-    this._close();
-  }
 
   /**
    * Slot Drag Handler
@@ -206,7 +114,6 @@ export default class SlotSection extends TranslatedComponent {
           // Copy power info
           targetSlot.enabled = originSlot.enabled;
           targetSlot.priority = originSlot.priority;
-          this.props.onChange();
         }
       } else {
         // Store power info
@@ -235,7 +142,6 @@ export default class SlotSection extends TranslatedComponent {
             targetSlot.enabled = targetEnabled;
             targetSlot.priority = targetPriority;
           }
-          this.props.onChange();
           this.props.ship
             .updatePowerGenerated()
             .updatePowerUsed()
@@ -281,6 +187,17 @@ export default class SlotSection extends TranslatedComponent {
     return 'ineligible';  // Cannot be dropped / invalid drop slot
   }
 
+  _open(newMenu, event) {
+    event.preventDefault();
+    event.stopPropagation();
+    const { currentMenu } = this.props;
+    if (currentMenu === newMenu) {
+      this.context.closeMenu();
+    } else {
+      this.context.openMenu(newMenu);
+    }
+  }
+
   /**
    * Close current menu
    */
@@ -297,14 +214,13 @@ export default class SlotSection extends TranslatedComponent {
   render() {
     let translate = this.context.language.translate;
     let sectionMenuOpened = this.props.currentMenu === this.sectionName;
-    let open = this._openMenu.bind(this, this.sectionName);
-    let ctx = wrapCtxMenu(this._contextMenu);
 
     return (
-      <div id={this.sectionId} className={'group'}  onDragLeave={this._dragOverNone}>
-        <div className={cn('section-menu', { selected: sectionMenuOpened })} onClick={open} onContextMenu={ctx}>
-          <h1 tabIndex="0" onKeyDown={this._keyDown} ref={ssHead => this.sectionRefArr['ssHeadRef'] = ssHead}>{translate(this.sectionName)} <Equalizer/></h1>
-          {sectionMenuOpened ? this._getSectionMenu(translate, this.props.ship) : null }
+      <div className="group" onDragLeave={this._dragOverNone}>
+        <div className={cn('section-menu', { selected: sectionMenuOpened })}
+          onContextMenu={wrapCtxMenu(this._contextMenu)} onClick={this._open.bind(this, this.sectionName)}>
+          <h1 tabIndex="0">{translate(this.sectionName)}<Equalizer/></h1>
+          {sectionMenuOpened && this._getSectionMenu()}
         </div>
         {this._getSlots()}
       </div>

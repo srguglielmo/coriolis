@@ -1,3 +1,4 @@
+import { Module } from 'ed-forge';
 
 /**
  * Wraps the callback/context menu handler such that the default
@@ -83,3 +84,18 @@ export function isEmpty(obj) {
   }
   return true;
 };
+
+/**
+ * Fetches a property from either a Module or a moduleInfo object
+ * @param {Object} m Either a Module or a moduleInfo object
+ * @param {string} property Property name
+ * @returns {number} Property value
+ */
+export function moduleGet(m, property) {
+  if (m instanceof Module) {
+    return m.get(property);
+  } else {
+    // Assume its a moduleInfo object
+    return m.props[property];
+  }
+}

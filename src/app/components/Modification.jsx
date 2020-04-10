@@ -12,33 +12,28 @@ export default class Modification extends TranslatedComponent {
   static propTypes = {
     m: PropTypes.instanceOf(Module).isRequired,
     property: PropTypes.string.isRequired,
-    onChange: PropTypes.func.isRequired,
     highlight: PropTypes.bool,
   };
 
   /**
    * Constructor
    * @param  {Object} props   React Component properties
-   * @param  {Object} context React Component context
    */
-  constructor(props, context) {
+  constructor(props) {
     super(props);
-    const { m, property } = props;
-    const originalValue = m.get(property);
-    this.state = { originalValue, value: String(originalValue) };
+    this.state = {};
   }
 
   /**
    * Notify listeners that a new value has been entered and commited.
    */
   _updateFinished() {
-    const { m, property } = this.props;
-    const { value, originalValue } = this.state;
-    const numValue = Number(value);
-    if (!isNaN(numValue) && originalValue !== numValue) {
+    const { m, property, value } = this.props;
+    const { inputValue } = this.state;
+    const numValue = Number(inputValue);
+    if (!isNaN(numValue) && value !== numValue) {
       m.set(property, numValue);
-      this.props.onChange();
-      this.setState({ originalValue: numValue });
+      this.setState({ inputValue: undefined });
     }
   }
 
@@ -48,13 +43,13 @@ export default class Modification extends TranslatedComponent {
    */
   render() {
     const { translate, formats } = this.context.language;
-    const { m, property, highlight } = this.props;
-    const { originalValue, value } = this.state;
+    const { m, property, highlight, value } = this.props;
+    const { inputValue } = this.state;
 
     // Some features only apply to specific modules; these features will be
     // undefined on items that do not belong to the same class. Filter these
     // features here
-    if (originalValue === undefined) {
+    if (value === undefined) {
       return null;
     }
 
@@ -69,7 +64,7 @@ export default class Modification extends TranslatedComponent {
             <tr>
               <td className="input-container">
                 <span>
-                  <NumberEditor value={value} stepModifier={1}
+                  <NumberEditor value={inputValue || value} stepModifier={1}
                     decimals={2} step={0.01} style={{ textAlign: 'right' }}
                     className={cn(
                       'cb',
@@ -81,9 +76,9 @@ export default class Modification extends TranslatedComponent {
                         event.stopPropagation();
                       }
                     }}
-                    onValueChange={(value) => {
-                      if (value.length <= 15) {
-                        this.setState({ value });
+                    onValueChange={(inputValue) => {
+                      if (inputValue.length <= 15) {
+                        this.setState({ inputValue });
                       }
                     }} />
                   {/* TODO: support unit */}
