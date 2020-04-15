@@ -3,23 +3,48 @@ import PropTypes from 'prop-types';
 import cn from 'classnames';
 import TranslatedComponent from './TranslatedComponent';
 import PowerBands from './PowerBands';
-import { slotName, slotComparator } from '../utils/SlotFunctions';
 import { Power, NoPower } from './SvgIcons';
+import autoBind from 'auto-bind';
+import { Ship, Module } from 'ed-forge';
 
-const POWER = [
-  null,
-  null,
-  <NoPower className='icon warning' />,
-  <Power className='secondary-disabled' />
-];
+/**
+ * Makes a comparison based on the order `false < undefined < true` (fut) and
+ * maps it to `[-1, 0, 1]`.
+ * @param {boolean} a Bool or undefined
+ * @param {boolean} b Bool or undefined
+ * @returns {number} Comparison
+ */
+function futComp(a, b) {
+  switch (a) {
+    case false: return (b === false ? 0 : 1);
+    // The next else-expression maps false to -1 and true to 1
+    case undefined: return (b === undefined ? 0 : 2 * Number(b) - 1);
+    case true: return (b === true ? 0 : -1);
+  }
+}
+
+/**
+ * Get the enabled-icon.
+ * @param {boolean} enabled Is the module enabled?
+ * @returns {React.Component} Enabled icon.
+ */
+function getPowerIcon(enabled) {
+  if (enabled === undefined) {
+    return null;
+  }
+  if (enabled) {
+    return <Power className='secondary-disabled' />;
+  } else {
+    return <NoPower className='icon warning' />;
+  }
+}
 
 /**
  * Power Management Section
  */
 export default class PowerManagement extends TranslatedComponent {
   static propTypes = {
-    ship: PropTypes.object.isRequired,
-    code: PropTypes.string.isRequired,
+    ship: PropTypes.instanceOf(Ship).isRequired,
     onChange: PropTypes.func.isRequired
   };
 
@@ -29,19 +54,17 @@ export default class PowerManagement extends TranslatedComponent {
    */
   constructor(props) {
     super(props);
-    this._renderPowerRows = this._renderPowerRows.bind(this);
-    this._updateWidth = this._updateWidth.bind(this);
-    this._sort = this._sort.bind(this);
+    autoBind(this);
 
     this.state = {
       predicate: 'pwr',
-      desc: false,
+      desc: true,
       width: 0
     };
   }
 
   /**
-   * Set the sort order and sort
+   * Set the sort order
    * @param  {string} predicate Sort predicate
    */
   _sortOrder(predicate) {
@@ -53,50 +76,66 @@ export default class PowerManagement extends TranslatedComponent {
       desc = true;
     }
 
-    this._sort(this.props.ship, predicate, desc);
     this.setState({ predicate, desc });
   }
 
   /**
    * Sorts the power list
-   * @param  {Ship} ship          Ship instance
-   * @param  {string} predicate   Sort predicate
-   * @param  {Boolean} desc       Sort order descending
+   * @param  {Module[]} modules Modules to sort
+   * @returns {Module[]} Sorted modules
    */
-  _sort(ship, predicate, desc) {
-    let powerList = ship.powerList;
-    let comp = slotComparator.bind(null, this.context.language.translate);
-
+  _sortAndFilter(modules) {
+    modules = modules.filter((m) => m.get('powerdraw') >= 0);
+    let { translate } = this.context.language;
+    const { predicate, desc } = this.state;
+    let comp;
     switch (predicate) {
-      case 'n': comp = comp(null, desc); break;
-      case 't': comp = comp((a, b) => a.type.localeCompare(b.type), desc); break;
-      case 'pri': comp = comp((a, b) => a.priority - b.priority, desc); break;
-      case 'pwr': comp = comp((a, b) => a.m.getPowerUsage() - b.m.getPowerUsage(), desc); break;
-      case 'r': comp = comp((a, b) => ship.getSlotStatus(a) - ship.getSlotStatus(b), desc); break;
-      case 'd': comp = comp((a, b) => ship.getSlotStatus(a, true) - ship.getSlotStatus(b, true), desc); break;
+      case 'n': comp = (a, b) => translate(a.readMeta('type')).localeCompare(
+        translate(b.readMeta('type'))
+      ); break;
+      // case 't': comp = comp((a, b) => a.type.localeCompare(b.type), desc); break;
+      case 'pri': comp = (a, b) => a.getPowerPriority() - b.getPowerPriority(); break;
+      case 'pwr': comp = (a, b) => a.get('powerdraw') - b.get('powerdraw'); break;
+      case 'r': comp = (a, b) => futComp(a.isPowered().retracted, b.isPowered().retracted); break;
+      case 'd': comp = (a, b) => futComp(a.isPowered().deployed, b.isPowered().deployed); break;
     }
-
-    powerList.sort(comp);
+    modules.sort(comp);
+    if (desc) {
+      modules.reverse();
+    }
+    return modules;
   }
 
   /**
-   * Update slot priority
-   * @param  {Object} slot Slot model
-   * @param  {number} inc  increment / decrement
+   * Creates a callback for flipping the enabled state of a module.
+   * @param {Module} m Module to flip
+   * @returns {Function} Callback
    */
-  _priority(slot, inc) {
-    if (this.props.ship.setSlotPriority(slot, slot.priority + inc)) {
-      this.props.onChange();
-    }
+  _flipEnabledCb(m) {
+    const { onChange } = this.props;
+    return () => {
+      m.setEnabled();
+      onChange();
+    };
   }
 
   /**
-   * Toggle slot active/inactive
-   * @param  {Object} slot Slot model
+   * Creates a callback that changes the power priority for the given module
+   * based on the given delta.
+   * @param {Module} m Module to set the priority for
+   * @param {Number} delta Delta to set
+   * @returns {Function} Callback
    */
-  _toggleEnabled(slot) {
-    this.props.ship.setSlotEnabled(slot, !slot.enabled);
-    this.props.onChange();
+  _prioCb(m, delta) {
+    const { onChange } = this.props;
+    return () => {
+      const prio = m.getPowerPriority();
+      const newPrio = Math.max(0, prio + delta);
+      if (0 < newPrio) {
+        m.setPowerPriority(newPrio);
+        onChange();
+      }
+    }
   }
 
   /**
@@ -110,36 +149,35 @@ export default class PowerManagement extends TranslatedComponent {
   _renderPowerRows(ship, translate, pwr, pct) {
     let powerRows = [];
 
-    for (let i = 0, l = ship.powerList.length; i < l; i++) {
-      let slot = ship.powerList[i];
-
-      if (slot.m && slot.m.getPowerUsage() > 0) {
-        let m = slot.m;
-        let toggleEnabled = this._toggleEnabled.bind(this, slot);
-        let retractedElem = null, deployedElem = null;
-
-        if (slot.enabled) {
-          retractedElem = <td className='ptr upp' onClick={toggleEnabled}>{POWER[ship.getSlotStatus(slot, false)]}</td>;
-          deployedElem = <td className='ptr upp' onClick={toggleEnabled}>{POWER[ship.getSlotStatus(slot, true)]}</td>;
-        } else {
-          retractedElem = <td className='ptr disabled upp' colSpan='2' onClick={toggleEnabled}>{translate('disabled')}</td>;
-        }
-
-        powerRows.push(<tr key={i} className={cn('highlight', { disabled: !slot.enabled })}>
-          <td className='ptr' style={{ width: '1em' }} onClick={toggleEnabled}>{m.class + m.rating}</td>
-          <td className='ptr le shorten cap' onClick={toggleEnabled}>{slotName(translate, slot)}</td>
-          <td className='ptr' onClick={toggleEnabled}><u>{translate(slot.type)}</u></td>
-          <td>
-            <span className='flip ptr btn' onClick={this._priority.bind(this, slot, -1)}>&#9658;</span>
-            {' ' + (slot.priority + 1) + ' '}
-            <span className='ptr btn' onClick={this._priority.bind(this, slot, 1)}>&#9658;</span>
-          </td>
-          <td className='ri ptr' style={{ width: '3.25em' }} onClick={toggleEnabled}>{pwr(m.getPowerUsage())}</td>
-          <td className='ri ptr' style={{ width: '3em' }} onClick={toggleEnabled}><u>{pct(m.getPowerUsage() / ship.powerAvailable)}</u></td>
-          {retractedElem}
-          {deployedElem}
-        </tr>);
+    let modules = this._sortAndFilter(ship.getModules());
+    for (let m of modules) {
+      let retractedElem = null, deployedElem = null;
+      const flipEnabled = this._flipEnabledCb(m);
+      if (m.isEnabled()) {
+        let powered = m.isPowered();
+        retractedElem = <td className='ptr upp' onClick={flipEnabled}>{getPowerIcon(powered.retracted)}</td>;
+        deployedElem = <td className='ptr upp' onClick={flipEnabled}>{getPowerIcon(powered.deployed)}</td>;
+      } else {
+        retractedElem = <td className='ptr disabled upp' colSpan='2' onClick={flipEnabled}>{translate('disabled')}</td>;
       }
+
+      const slot = m.getSlot();
+      powerRows.push(<tr key={slot} className={cn('highlight', { disabled: !m.isEnabled() })}>
+        <td className='ptr' style={{ width: '1em' }} onClick={flipEnabled}>{String(m.getClass()) + m.getRating()}</td>
+        <td className='ptr le shorten cap' onClick={flipEnabled}>{translate(m.readMeta('type'))}</td>
+        {/* <td className='ptr' onClick={flipEnabled}><u>{translate(slot.type)}</u></td> */}
+        <td>
+          <span className='flip ptr btn' onClick={this._prioCb(m, -1)}>&#9658;</span>
+          {' ' + (m.getPowerPriority() + 1) + ' '}
+          <span className='ptr btn' onClick={this._prioCb(m, 1)}>&#9658;</span>
+        </td>
+        <td className='ri ptr' style={{ width: '3.25em' }} onClick={flipEnabled}>{pwr(m.get('powerdraw'))}</td>
+        <td className='ri ptr' style={{ width: '3em' }} onClick={flipEnabled}>
+          <u>{pct(m.get('powerdraw') / ship.getPowerPlant().get('powercapacity'))}</u>
+        </td>
+        {retractedElem}
+        {deployedElem}
+      </tr>);
     }
     return powerRows;
   }
@@ -155,7 +193,6 @@ export default class PowerManagement extends TranslatedComponent {
    * Add listeners when about to mount and sort power list
    */
   componentWillMount() {
-    this._sort(this.props.ship, this.state.predicate, this.state.desc);
     this.resizeListener = this.context.onWindowResize(this._updateWidth);
   }
 
@@ -164,17 +201,6 @@ export default class PowerManagement extends TranslatedComponent {
    */
   componentDidMount() {
     this._updateWidth();
-  }
-
-  /**
-   * Sort power list if the ship instance has changed
-   * @param  {Object} nextProps   Incoming/Next properties
-   * @param  {Object} nextState   Incoming/Next state
-   */
-  componentWillUpdate(nextProps, nextState) {
-    if (this.props.ship != nextProps.ship) {
-      this._sort(nextProps.ship, nextState.predicate, nextState.desc);
-    }
   }
 
   /**
@@ -189,41 +215,40 @@ export default class PowerManagement extends TranslatedComponent {
    * @return {React.Component} contents
    */
   render() {
-    let { ship, code } = this.props;
+    let { ship } = this.props;
     let { translate, formats } = this.context.language;
-    let pwr = formats.f2;
-    let pp = ship.standard[0].m;
-    let sortOrder = this._sortOrder;
+    let pp = ship.getPowerPlant();
 
     return (
       <div ref={node => this.node = node} className='group half' id='componentPriority'>
         <table style={{ width: '100%' }}>
           <thead>
             <tr className='main'>
-              <th colSpan='2' className='sortable le' onClick={sortOrder.bind(this, 'n')} >{translate('module')}</th>
-              <th style={{ width: '3em' }} className='sortable' onClick={sortOrder.bind(this, 't')} >{translate('type')}</th>
-              <th style={{ width: '4em' }} className='sortable' onClick={sortOrder.bind(this, 'pri')} >{translate('pri')}</th>
-              <th colSpan='2' className='sortable' onClick={sortOrder.bind(this, 'pwr')} >{translate('PWR')}</th>
-              <th style={{ width: '3em' }} className='sortable' onClick={sortOrder.bind(this, 'r')} >{translate('ret')}</th>
-              <th style={{ width: '3em' }} className='sortable' onClick={sortOrder.bind(this, 'd')} >{translate('dep')}</th>
+              <th colSpan='2' className='sortable le' onClick={() => this._sortOrder('n')} >{translate('module')}</th>
+              {/* <th style={{ width: '3em' }} className='sortable' onClick={() => this._sortOrder('t')} >{translate('type')}</th> */}
+              <th style={{ width: '4em' }} className='sortable' onClick={() => this._sortOrder('pri')} >{translate('pri')}</th>
+              <th colSpan='2' className='sortable' onClick={() => this._sortOrder('pwr')} >{translate('PWR')}</th>
+              <th style={{ width: '3em' }} className='sortable' onClick={() => this._sortOrder('r')} >{translate('ret')}</th>
+              <th style={{ width: '3em' }} className='sortable' onClick={() => this._sortOrder('d')} >{translate('dep')}</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>{pp.class + pp.rating}</td>
+              <td>{String(pp.getClass()) + pp.getRating()}</td>
               <td className='le shorten cap' >{translate('pp')}</td>
-              <td><u >{translate('SYS')}</u></td>
               <td>1</td>
-              <td className='ri'>{pwr(pp.getPowerGeneration())}</td>
+              <td className='ri'>{formats.f2(pp.get('powercapacity'))}</td>
               <td className='ri'><u>100%</u></td>
               <td></td>
               <td></td>
             </tr>
-            <tr><td style={{ lineHeight:0 }} colSpan='8'><hr style={{ margin: '0 0 3px', background: '#ff8c0d', border: 0, height: 1 }} /></td></tr>
-            {this._renderPowerRows(ship, translate, pwr, formats.pct1)}
+            <tr><td style={{ lineHeight:0 }} colSpan='8'>
+              <hr style={{ margin: '0 0 3px', background: '#ff8c0d', border: 0, height: 1 }} />
+            </td></tr>
+            {this._renderPowerRows(ship, translate, formats.f2, formats.pct1)}
           </tbody>
         </table>
-        <PowerBands width={this.state.width} code={code} available={pp.getPowerGeneration()} bands={ship.priorityBands} />
+        <PowerBands width={this.state.width} ship={ship} available={pp.get('powercapacity')} />
       </div>
     );
   }
