@@ -631,11 +631,11 @@ export default class OutfittingPage extends Page {
         </div>
 
         {/* Main tables */}
-        <ShipSummaryTable ship={ship} />
-        <StandardSlotSection ship={ship} currentMenu={menu} />
-        <InternalSlotSection ship={ship} currentMenu={menu} />
-        <HardpointSlotSection ship={ship} currentMenu={menu} />
-        <UtilitySlotSection ship={ship} currentMenu={menu} />
+        <ShipSummaryTable ship={ship} code={code} />
+        <StandardSlotSection ship={ship} code={code} currentMenu={menu} />
+        <InternalSlotSection ship={ship} code={code} currentMenu={menu} />
+        <HardpointSlotSection ship={ship} code={code} currentMenu={menu} />
+        <UtilitySlotSection ship={ship} code={code} currentMenu={menu} />
 
         {/* Control of ship and opponent */}
         {/* <div className="group quarter">

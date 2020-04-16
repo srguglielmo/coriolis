@@ -32,6 +32,7 @@ function getClass(selected, relDraw) {
 export default class PowerBands extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.instanceOf(Ship).isRequired,
+    code: PropTypes.string.isRequired,
     width: PropTypes.number.isRequired,
   };
 

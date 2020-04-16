@@ -45,6 +45,7 @@ function getPowerIcon(enabled) {
 export default class PowerManagement extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.instanceOf(Ship).isRequired,
+    code: PropTypes.string.isRequired,
     onChange: PropTypes.func.isRequired
   };
 
@@ -215,7 +216,7 @@ export default class PowerManagement extends TranslatedComponent {
    * @return {React.Component} contents
    */
   render() {
-    let { ship } = this.props;
+    let { ship, code } = this.props;
     let { translate, formats } = this.context.language;
     let pp = ship.getPowerPlant();
 
@@ -248,7 +249,7 @@ export default class PowerManagement extends TranslatedComponent {
             {this._renderPowerRows(ship, translate, formats.f2, formats.pct1)}
           </tbody>
         </table>
-        <PowerBands width={this.state.width} ship={ship} available={pp.get('powercapacity')} />
+        <PowerBands width={this.state.width} ship={ship} code={code} />
       </div>
     );
   }

@@ -11,7 +11,6 @@ const {
   ARMOUR_METRICS, CARGO_CAPACITY, FUEL_CAPACITY, UNLADEN_MASS, MAXIMUM_MASS,
   MODULE_PROTECTION_METRICS
 } = ShipProps;
-import { OBJECT_EVENT } from 'ed-forge/lib/Ship';
 
 /**
  * Ship Summary Table / Stats
@@ -19,6 +18,7 @@ import { OBJECT_EVENT } from 'ed-forge/lib/Ship';
 export default class ShipSummaryTable extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.object.isRequired,
+    code: PropTypes.string.isRequired,
   };
 
   /**
@@ -31,18 +31,6 @@ export default class ShipSummaryTable extends TranslatedComponent {
     this.state = {
       shieldColour: 'blue'
     };
-  }
-
-  _onChange() {
-    this.forceUpdate();
-  }
-
-  componentWillMount() {
-    this.props.ship.on(OBJECT_EVENT, this._onChange);
-  }
-
-  componentWillUnmount() {
-    this.props.ship.removeListener(OBJECT_EVENT, this._onChange);
   }
 
   /**

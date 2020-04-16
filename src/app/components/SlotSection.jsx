@@ -15,6 +15,7 @@ const browser = require('detect-browser');
 export default class SlotSection extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.instanceOf(Ship),
+    code: PropTypes.string.isRequired,
     togglePwr: PropTypes.func,
   };
 
