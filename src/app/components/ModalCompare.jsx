@@ -21,7 +21,6 @@ function buildComparator(a, b) {
  * Compare builds modal
  */
 export default class ModalCompare extends TranslatedComponent {
-
   static propTypes = {
     onSelect: PropTypes.func.isRequired,
     builds: PropTypes.array
@@ -105,8 +104,8 @@ export default class ModalCompare extends TranslatedComponent {
 
     let selectedBuilds = usedBuilds.map((build, i) =>
       <tr key={i} onClick={this._removeBuild.bind(this, i)}>
-        <td className='tl'>{build.name}</td><
-        td className='tl'>{build.buildName}</td>
+        <td className='tl'>{build.name}</td>
+        <td className='tl'>{build.buildName}</td>
       </tr>
     );
 

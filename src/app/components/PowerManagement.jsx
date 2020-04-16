@@ -136,7 +136,7 @@ export default class PowerManagement extends TranslatedComponent {
         m.setPowerPriority(newPrio);
         onChange();
       }
-    }
+    };
   }
 
   /**

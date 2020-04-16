@@ -7,7 +7,6 @@ import { shallowEqual } from '../utils/UtilityFunctions';
  * Abstract/Base Page
  */
 export default class Page extends React.Component {
-
   static contextTypes = {
     closeMenu: PropTypes.func.isRequired,
     hideModal: PropTypes.func.isRequired,
@@ -84,5 +83,4 @@ export default class Page extends React.Component {
     }
     return this.renderPage();
   }
-
 }

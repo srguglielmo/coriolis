@@ -5,7 +5,6 @@ import PropTypes from 'prop-types';
  * Unexpected Error page / block
  */
 export default class ErrorDetails extends React.Component {
-
   static contextTypes = {
     route: PropTypes.object.isRequired,
     language: PropTypes.object.isRequired
@@ -46,7 +45,7 @@ export default class ErrorDetails extends React.Component {
       <h1>Jameson, we have a problem..</h1>
       <h1><small>{error.message}</small></h1>
       <br/>
-        {importerror ? <div>If you are attempting to import a ship from EDDI or EDMC and are seeing a 'Z_BUF_ERROR' it means that the URL has not been provided correctly.  This is a common problem when using Microsoft Internet Explorer or Microsoft Edge, and you should use another browser instead.</div> : null }
+      {importerror ? <div>If you are attempting to import a ship from EDDI or EDMC and are seeing a 'Z_BUF_ERROR' it means that the URL has not been provided correctly.  This is a common problem when using Microsoft Internet Explorer or Microsoft Edge, and you should use another browser instead.</div> : null }
       <br/>
       <div>Please note that this site uses Google Analytics to track performance and usage.  If you are blocking cookies, for example using Ghostery, please disable blocking for this site and try again.</div>
       <br/>

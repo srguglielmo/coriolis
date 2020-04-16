@@ -7,7 +7,6 @@ import TranslatedComponent from './TranslatedComponent';
  * Help Modal
  */
 export default class ModalHelp extends TranslatedComponent {
-
   static propTypes = {
     title: PropTypes.string
   };

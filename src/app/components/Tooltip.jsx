@@ -6,7 +6,6 @@ import TranslatedComponent from './TranslatedComponent';
  * Document Root Tooltip
  */
 export default class Tooltip extends TranslatedComponent {
-
   static propTypes = {
     rect: PropTypes.object.isRequired,
     options: PropTypes.object
@@ -127,5 +126,4 @@ export default class Tooltip extends TranslatedComponent {
       </div>
     </div>;
   }
-
 }

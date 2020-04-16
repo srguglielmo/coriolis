@@ -85,8 +85,6 @@ function detailedJsonToBuild(detailedBuild) {
  * Import Modal
  */
 export default class ModalImport extends TranslatedComponent {
-
-
   static propTypes = {
     builds: PropTypes.object,  // Optional: Import object
   };
@@ -130,7 +128,7 @@ export default class ModalImport extends TranslatedComponent {
     if (data && data.Ship && data.Modules) {
       const deflated = zlib.deflate(JSON.stringify(data), { to: 'string' });
       let compressed = btoa(deflated);
-      this.setState({loadoutEvent: compressed});
+      this.setState({ loadoutEvent: compressed });
     } else {
       throw 'Loadout event must contain Ship and Modules';
     }
@@ -542,7 +540,7 @@ export default class ModalImport extends TranslatedComponent {
               {comparisonRows}
             </tbody>
           </table>
-          );
+        );
       }
 
       if(this.state.canEdit) {

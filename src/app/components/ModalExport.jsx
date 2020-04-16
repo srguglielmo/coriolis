@@ -6,7 +6,6 @@ import TranslatedComponent from './TranslatedComponent';
  * Export Modal
  */
 export default class ModalExport extends TranslatedComponent {
-
   static propTypes = {
     title: PropTypes.string,
     generator: PropTypes.func,

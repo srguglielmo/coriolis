@@ -8,7 +8,6 @@ import Persist from '../stores/Persist';
  * Permalink modal
  */
 export default class ModalOrbis extends TranslatedComponent {
-
   static propTypes = {
     ship: PropTypes.any.isRequired
   };
@@ -58,14 +57,14 @@ export default class ModalOrbis extends TranslatedComponent {
       credentials: 'include',
       mode: 'cors'
     })
-    .then(data => data.json())
-    .then(res => {
-      this.setState({ authenticatedStatus: res.status || res.error });
-    })
-    .catch(err => {
-      console.error(err);
-      this.setState({ authenticatedStatus: err.message });
-    });
+      .then(data => data.json())
+      .then(res => {
+        this.setState({ authenticatedStatus: res.status || res.error });
+      })
+      .catch(err => {
+        console.error(err);
+        this.setState({ authenticatedStatus: err.message });
+      });
   }
 
   /**
@@ -98,7 +97,7 @@ export default class ModalOrbis extends TranslatedComponent {
     let ship = this.state.ship;
     let cat = e.target.value;
     ship.category = cat;
-    this.setState({ship});
+    this.setState({ ship });
   }
 
   /**

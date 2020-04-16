@@ -7,7 +7,6 @@ import { shallowEqual } from '../utils/UtilityFunctions';
  * Link wrapper component
  */
 export default class Link extends React.Component {
-
   static propTypes = {
     children: PropTypes.any,
     href: PropTypes.string.isRequired,
@@ -56,5 +55,4 @@ export default class Link extends React.Component {
   render() {
     return <a {...this.props} onClick={this.handler}>{this.props.children}</a>;
   }
-
 }

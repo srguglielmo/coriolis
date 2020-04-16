@@ -114,11 +114,11 @@ export default class ShipPicker extends TranslatedComponent {
             <span className='menu-item-label'>{shipString}</span>
           </div>
           { menuOpen ?
-          <div className='menu-list' onClick={ (e) => e.stopPropagation() }>
-            <div className='quad'>
-              {this._renderPickerMenu()}
-            </div>
-          </div> : null }
+            <div className='menu-list' onClick={ (e) => e.stopPropagation() }>
+              <div className='quad'>
+                {this._renderPickerMenu()}
+              </div>
+            </div> : null }
         </div>
       </div>
     );

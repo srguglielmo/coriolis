@@ -10,7 +10,6 @@ const MARGIN = { top: 15, right: 20, bottom: 35, left: 60 };
  * Line Chart
  */
 export default class LineChart extends TranslatedComponent {
-
   static defaultProps = {
     code: '',
     xMin: 0,

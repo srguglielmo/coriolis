@@ -8,7 +8,6 @@ import Persist from '../stores/Persist';
  * Permalink modal
  */
 export default class ModalShoppingList extends TranslatedComponent {
-
   static propTypes = {
     ship: PropTypes.object.isRequired
   };

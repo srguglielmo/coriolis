@@ -9,7 +9,6 @@ import Persist from '../stores/Persist';
  * Permalink modal
  */
 export default class ModalBatchOrbis extends TranslatedComponent {
-
   static propTypes = {
     ships: PropTypes.any.isRequired
   };

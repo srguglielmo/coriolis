@@ -56,12 +56,11 @@ function selectAll(e) {
  * Coriolis App Header section / menus
  */
 export default class Header extends TranslatedComponent {
-
-	/**
-	 * Constructor
-	 * @param  {Object} props   React Component properties
-	 * @param  {Object} context React Component context
-	 */
+  /**
+   * Constructor
+   * @param  {Object} props   React Component properties
+   * @param  {Object} context React Component context
+   */
   constructor(props, context) {
     super(props);
     this.shipOrder = Object.keys(Ships).sort();
@@ -509,7 +508,7 @@ export default class Header extends TranslatedComponent {
               <td style={{ width: 20 }}><span style={{ fontSize: 30 }}>A</span></td>
             </tr>
             <tr>
-             <td colSpan='3' style={{ textAlign: 'center', cursor: 'pointer' }} className='primary-disabled cap' onClick={this._resetTextSize.bind(this)}>{translate('reset')}</td>
+              <td colSpan='3' style={{ textAlign: 'center', cursor: 'pointer' }} className='primary-disabled cap' onClick={this._resetTextSize.bind(this)}>{translate('reset')}</td>
             </tr>
           </tbody>
         </table>
@@ -608,7 +607,7 @@ export default class Header extends TranslatedComponent {
         </div>
 
         <div className='l menu'>
-          <div className={cn('menu-header', { selected: openedMenu == 'announce', disabled: this.props.announcements.length === 0})} onClick={this.props.announcements.length !== 0 && this._openAnnounce}>
+          <div className={cn('menu-header', { selected: openedMenu == 'announce', disabled: this.props.announcements.length === 0 })} onClick={this.props.announcements.length !== 0 && this._openAnnounce}>
             <span className='menu-item-label'>{translate('announcements')}</span>
           </div>
           {openedMenu == 'announce' ? this._getAnnouncementsMenu() : null}
@@ -639,5 +638,4 @@ export default class Header extends TranslatedComponent {
       </header>
     );
   }
-
 }

@@ -6,7 +6,6 @@ import { shallowEqual } from '../utils/UtilityFunctions';
  * Abstract Translated Component
  */
 export default class TranslatedComponent extends React.Component {
-
   static contextTypes = {
     language: PropTypes.object.isRequired,
     sizeRatio: PropTypes.number.isRequired,

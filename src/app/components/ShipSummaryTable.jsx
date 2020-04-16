@@ -80,8 +80,8 @@ export default class ShipSummaryTable extends TranslatedComponent {
     const canJump = true;
 
     return <div id='summary'>
-      <div style={{display: "table", width: "100%"}}>
-        <div style={{display: "table-row"}}>
+      <div style={{ display: 'table', width: '100%' }}>
+        <div style={{ display: 'table-row' }}>
           <table className={'summaryTable'}>
             <thead>
               <tr className='main'>
@@ -119,49 +119,49 @@ export default class ShipSummaryTable extends TranslatedComponent {
               <tr>
                 <td onMouseEnter={termtip.bind(null, speedTooltip, { cap: 0 })}
                   onMouseLeave={hide}
-                >{canThrust
-                  ? <span>{int(speed)}{u['m/s']}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                >{canThrust ?
+                    <span>{int(speed)}{u['m/s']}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, boostTooltip, { cap: 0 })}
                   onMouseLeave={hide}
-                >{canBoost
-                  ? <span>{int(shipBoost)}{u['m/s']}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                >{canBoost ?
+                    <span>{int(shipBoost)}{u['m/s']}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_MAX_SINGLE_JUMP', { cap: 0 })}
                   onMouseLeave={hide}
-                >{canJump
+                >{canJump ?
                   // TODO:
-                  ? <span>{NaN}{u.LY}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                    <span>{NaN}{u.LY}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_UNLADEN_SINGLE_JUMP', { cap: 0 })}
                   onMouseLeave={hide}
-                >{canJump
+                >{canJump ?
                   // TODO:
-                  ? <span>{NaN}{u.LY}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                    <span>{NaN}{u.LY}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_LADEN_SINGLE_JUMP', { cap: 0 })}
                   onMouseLeave={hide}
-                >{canJump
-                  ? <span>{f2(jumpRangeMetrics.jumpRange)}{u.LY}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                >{canJump ?
+                    <span>{f2(jumpRangeMetrics.jumpRange)}{u.LY}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_UNLADEN_TOTAL_JUMP', { cap: 0 })}
                   onMouseLeave={hide}
-                >{canJump
+                >{canJump ?
                   // TODO:
-                  ? <span>{NaN}{u.LY}</span>
-                  : <span className='warning'>0 <Warning/></span>
-                }</td>
+                    <span>{NaN}{u.LY}</span> :
+                    <span className='warning'>0 <Warning/></span>
+                  }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_LADEN_TOTAL_JUMP', { cap: 0 })}
                   onMouseLeave={hide}
-                >{canJump
-                  ? <span>{f2(jumpRangeMetrics.totalRange)}{u.LY}</span>
-                  : <span className='warning'>0<Warning/></span>
-                }</td>
+                >{canJump ?
+                    <span>{f2(jumpRangeMetrics.totalRange)}{u.LY}</span> :
+                    <span className='warning'>0<Warning/></span>
+                  }</td>
                 <td className={sgClassNames}
                   onMouseEnter={termtip.bind(null, sgTooltip, { cap: 0 })}
                   onMouseLeave={hide}
@@ -226,21 +226,21 @@ export default class ShipSummaryTable extends TranslatedComponent {
               </tr>
             </thead>
             <tbody>
-            <tr>
-              <td>{translate(shieldGenerator.readMeta('type') || 'No Shield')}</td>
-              <td>{formats.pct1(1 - sgMetrics.explosive.damageMultiplier)}</td>
-              <td>{formats.pct1(1 - sgMetrics.kinetic.damageMultiplier)}</td>
-              <td>{formats.pct1(1 - sgMetrics.thermal.damageMultiplier)}</td>
-              <td></td>
+              <tr>
+                <td>{translate(shieldGenerator.readMeta('type') || 'No Shield')}</td>
+                <td>{formats.pct1(1 - sgMetrics.explosive.damageMultiplier)}</td>
+                <td>{formats.pct1(1 - sgMetrics.kinetic.damageMultiplier)}</td>
+                <td>{formats.pct1(1 - sgMetrics.thermal.damageMultiplier)}</td>
+                <td></td>
 
-              <td>{int(sgMetrics.shieldStrength || 0)}{u.MJ}</td>
-              <td>{int(sgMetrics.shieldStrength / sgMetrics.explosive.damageMultiplier || 0)}{u.MJ}</td>
-              <td>{int(sgMetrics.shieldStrength / sgMetrics.kinetic.damageMultiplier || 0)}{u.MJ}</td>
-              <td>{int(sgMetrics.shieldStrength / sgMetrics.thermal.damageMultiplier || 0)}{u.MJ}</td>
-              <td></td>
-              <td>{formats.time(sgMetrics.recover) || translate('Never')}</td>
-              <td>{formats.time(sgMetrics.recharge) || translate('Never')}</td>
-            </tr>
+                <td>{int(sgMetrics.shieldStrength || 0)}{u.MJ}</td>
+                <td>{int(sgMetrics.shieldStrength / sgMetrics.explosive.damageMultiplier || 0)}{u.MJ}</td>
+                <td>{int(sgMetrics.shieldStrength / sgMetrics.kinetic.damageMultiplier || 0)}{u.MJ}</td>
+                <td>{int(sgMetrics.shieldStrength / sgMetrics.thermal.damageMultiplier || 0)}{u.MJ}</td>
+                <td></td>
+                <td>{formats.time(sgMetrics.recover) || translate('Never')}</td>
+                <td>{formats.time(sgMetrics.recharge) || translate('Never')}</td>
+              </tr>
             </tbody>
             <thead>
               <tr>
@@ -252,7 +252,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <th rowSpan={2} onMouseEnter={termtip.bind(null, 'TT_MODULE_PROTECTION_INTERNAL', { cap: 0 })} onMouseLeave={hide} className='lft'>{translate('internal protection')}</th>
               </tr>
               <tr>
-              <th>{`${translate('explosive')}`}</th>
+                <th>{`${translate('explosive')}`}</th>
                 <th>{`${translate('kinetic')}`}</th>
                 <th>{`${translate('thermal')}`}</th>
                 <th>{`${translate('caustic')}`}</th>

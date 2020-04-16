@@ -10,7 +10,6 @@ const LABEL_COLOUR = '#000000';
  * A pie chart
  */
 export default class PieChart extends Component {
-
   static propTypes = {
     data : PropTypes.array.isRequired
   };

@@ -7,7 +7,6 @@ import ShortenUrl from '../utils/ShortenUrl';
  * Permalink modal
  */
 export default class ModalPermalink extends TranslatedComponent {
-
   static propTypes = {
     url: PropTypes.string.isRequired
   };

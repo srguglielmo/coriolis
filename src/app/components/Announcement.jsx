@@ -6,7 +6,6 @@ import { autoBind } from 'react-extras';
  * Announcement component
  */
 export default class Announcement extends React.Component {
-
   static propTypes = {
     text: PropTypes.string
   };
@@ -27,5 +26,4 @@ export default class Announcement extends React.Component {
   render() {
     return <div className="announcement" >{this.props.text}</div>;
   }
-
 }
