@@ -1,13 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import cn from 'classnames';
-import { Ships } from 'coriolis-data/dist';
 import Persist from '../stores/Persist';
 import Ship from '../shipyard/Ship';
 import { Insurance } from '../shipyard/Constants';
-import { slotName, slotComparator } from '../utils/SlotFunctions';
 import TranslatedComponent from './TranslatedComponent';
 import { ShoppingIcon } from '../components/SvgIcons';
+import autoBind from 'auto-bind';
+import { assign, differenceBy, sortBy, reverse } from 'lodash';
+import { COST, FUEL_CAPACITY } from 'ed-forge/lib/ship-stats';
 
 /**
  * Cost Section
@@ -16,7 +17,7 @@ export default class CostSection extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.object.isRequired,
     code: PropTypes.string.isRequired,
-    buildName: PropTypes.string
+    buildName: PropTypes.string,
   };
 
   /**
@@ -25,71 +26,53 @@ export default class CostSection extends TranslatedComponent {
    */
   constructor(props) {
     super(props);
-    this._costsTab = this._costsTab.bind(this);
-    this._sortCost = this._sortCost.bind(this);
-    this._sortAmmo = this._sortAmmo.bind(this);
-    this._sortRetrofit = this._sortRetrofit.bind(this);
-    this._buildRetrofitShip = this._buildRetrofitShip.bind(this);
-    this._onBaseRetrofitChange = this._onBaseRetrofitChange.bind(this);
-    this._defaultRetrofitName = this._defaultRetrofitName.bind(this);
-    this._eddbShoppingList = this._eddbShoppingList.bind(this);
-
-    let data = Ships[props.ship.id];   // Retrieve the basic ship properties, slots and defaults
-    let retrofitName = this._defaultRetrofitName(props.ship.id, props.buildName);
-    let retrofitShip = this._buildRetrofitShip(props.ship.id, retrofitName);
-    let shipDiscount = Persist.getShipDiscount();
-    let moduleDiscount = Persist.getModuleDiscount();
-
-    this.props.ship.applyDiscounts(shipDiscount, moduleDiscount);
-    retrofitShip.applyDiscounts(shipDiscount, moduleDiscount);
+    autoBind(this);
 
     this.state = {
-      retrofitShip,
-      retrofitName,
-      shipDiscount,
-      moduleDiscount,
+      retrofitName: this._defaultRetrofitName(props.ship, props.buildName),
+      shipDiscount: Persist.getShipDiscount(),
+      moduleDiscount: Persist.getModuleDiscount(),
       insurance: Insurance[Persist.getInsurance()],
       tab: Persist.getCostTab(),
-      buildOptions: Persist.getBuildsNamesFor(props.ship.id),
-      ammoPredicate: 'cr',
-      ammoDesc: true,
-      costPredicate: 'cr',
-      costDesc: true,
-      retroPredicate: 'cr',
-      retroDesc: true
+      buildOptions: Persist.getBuildsNamesFor(props.ship.getShipType()),
+      predicate: 'cr',
+      desc: true,
+      excluded: {},
     };
   }
 
   /**
    * Create a ship instance to base/reference retrofit changes from
-   * @param  {string} shipId       Ship Id
+   * @param  {string} ship         Ship
    * @param  {string} name         Build name
    * @param  {Ship} retrofitShip   Existing retrofit ship
    * @return {Ship}                Retrofit ship
    */
-  _buildRetrofitShip(shipId, name, retrofitShip) {
-    let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
+  _buildRetrofitShip(ship, name, retrofitShip) {
+    // TODO: once ships have been persisted, this can be fixed
+    return ship;
+    // let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
 
-    if (!retrofitShip) {  // Don't create a new instance unless needed
-      retrofitShip = new Ship(shipId, data.properties, data.slots);  // Create a new Ship for retrofit comparison
-    }
+    // if (!retrofitShip) {  // Don't create a new instance unless needed
+    //   retrofitShip = new Ship(shipId, data.properties, data.slots);  // Create a new Ship for retrofit comparison
+    // }
 
-    if (Persist.hasBuild(shipId, name)) {
-      retrofitShip.buildFrom(Persist.getBuild(shipId, name));  // Populate modules from existing build
-    } else {
-      retrofitShip.buildWith(data.defaults);  // Populate with default components
-    }
-    return retrofitShip;
+    // if (Persist.hasBuild(shipId, name)) {
+    //   retrofitShip.buildFrom(Persist.getBuild(shipId, name));  // Populate modules from existing build
+    // } else {
+    //   retrofitShip.buildWith(data.defaults);  // Populate with default components
+    // }
+    // return retrofitShip;
   }
 
   /**
    * Get the default retrofit build name if it exists
-   * @param  {string} shipId       Ship Id
+   * @param  {string} ship         Ship
    * @param  {string} name         Build name
    * @return {string}              Build name or null
    */
-  _defaultRetrofitName(shipId, name) {
-    return Persist.hasBuild(shipId, name) ? name : null;
+  _defaultRetrofitName(ship, name) {
+    return Persist.hasBuild(ship.getShipType(), name) ? name : null;
   }
 
   /**
@@ -107,9 +90,6 @@ export default class CostSection extends TranslatedComponent {
   _onDiscountChanged() {
     let shipDiscount = Persist.getShipDiscount();
     let moduleDiscount = Persist.getModuleDiscount();
-    this.props.ship.applyDiscounts(shipDiscount, moduleDiscount);
-    this.state.retrofitShip.applyDiscounts(shipDiscount, moduleDiscount);
-    this._updateRetrofit(this.props.ship, this.state.retrofitShip);
     this.setState({ shipDiscount, moduleDiscount });
   }
 
@@ -126,156 +106,33 @@ export default class CostSection extends TranslatedComponent {
    * @param  {SyntheticEvent} event Build name to base the retrofit ship on
    */
   _onBaseRetrofitChange(event) {
-    let retrofitName = event.target.value;
-    let ship = this.props.ship;
-
-    if (retrofitName) {
-      this.state.retrofitShip.buildFrom(Persist.getBuild(ship.id, retrofitName));
-    } else {
-      this.state.retrofitShip.buildWith(Ships[ship.id].defaults);  // Retrofit ship becomes stock build
-    }
-    this._updateRetrofit(ship, this.state.retrofitShip);
-    this.setState({ retrofitName });
+    this.setState({ retrofitName: event.target.value });
   }
 
   /**
-   * On builds changed check to see if the retrofit ship needs
-   * to be updated
+   * Toggle item cost inclusion
+   * @param  {String} key Key of the row to toggle
    */
-  _onBuildsChanged() {
-    let update = false;
-    let ship = this.props.ship;
-    let { retrofitName, retrofitShip } = this.state;
-
-    if(!Persist.hasBuild(ship.id, retrofitName)) {
-      retrofitShip.buildWith(Ships[ship.id].defaults);  // Retrofit ship becomes stock build
-      this.setState({ retrofitName: null });
-      update = true;
-    } else if (Persist.getBuild(ship.id, retrofitName) != retrofitShip.toString()) {
-      retrofitShip.buildFrom(Persist.getBuild(ship.id, retrofitName));  // Repopulate modules from saved build
-      update = true;
-    }
-
-    if (update) { // Update retrofit comparison
-      this._updateRetrofit(ship, retrofitShip);
-    }
-    // Update list of retrofit base build options
-    this.setState({ buildOptions: Persist.getBuildsNamesFor(ship.id) });
+  _toggleExcluded(key) {
+    let { excluded } = this.state;
+    excluded = assign({}, excluded);
+    const slotExcluded = excluded[key];
+    excluded[key] = (slotExcluded === undefined ? true : !slotExcluded);
+    this.setState({ excluded });
   }
 
   /**
-   * Toggle item cost inclusion in overall total
-   * @param  {Object} item Cost item
+   * Set list sort predicate
+   * @param  {string} newPredicate sort predicate
    */
-  _toggleCost(item) {
-    this.props.ship.setCostIncluded(item, !item.incCost);
-    this.forceUpdate();
-  }
+  _sortBy(newPredicate) {
+    let { predicate, desc } = this.state;
 
-  /**
-   * Toggle item cost inclusion in retrofit total
-   * @param  {Object} item Cost item
-   */
-  _toggleRetrofitCost(item) {
-    let retrofitTotal = this.state.retrofitTotal;
-    item.retroItem.incCost = !item.retroItem.incCost;
-    retrofitTotal += item.netCost * (item.retroItem.incCost ? 1 : -1);
-    this.setState({ retrofitTotal });
-  }
-
-  /**
-   * Set cost list sort predicate
-   * @param  {string} predicate sort predicate
-   */
-  _sortCostBy(predicate) {
-    let { costPredicate, costDesc } = this.state;
-
-    if (costPredicate == predicate) {
-      costDesc = !costDesc;
+    if (newPredicate == predicate) {
+      desc = !desc;
     }
 
-    this.setState({ costPredicate: predicate, costDesc });
-  }
-
-  /**
-   * Sort cost list
-   * @param  {Ship} ship        Ship instance
-   * @param  {string} predicate Sort predicate
-   * @param  {Boolean} desc     Sort descending
-   */
-  _sortCost(ship, predicate, desc) {
-    let costList = ship.costList;
-    let translate = this.context.language.translate;
-
-    if (predicate == 'm') {
-      costList.sort(slotComparator(translate, null, desc));
-    } else {
-      costList.sort(slotComparator(translate, (a, b) => (a.m.cost || 0) - (b.m.cost || 0), desc));
-    }
-  }
-
-  /**
-   * Set ammo list sort predicate
-   * @param  {string} predicate sort predicate
-   */
-  _sortAmmoBy(predicate) {
-    let { ammoPredicate, ammoDesc } = this.state;
-
-    if (ammoPredicate == predicate) {
-      ammoDesc = !ammoDesc;
-    }
-
-    this.setState({ ammoPredicate: predicate, ammoDesc });
-  }
-
-  /**
-   * Sort ammo cost list
-   * @param  {Array} ammoCosts  Ammo cost list
-   * @param  {string} predicate Sort predicate
-   * @param  {Boolean} desc     Sort descending
-   */
-  _sortAmmo(ammoCosts, predicate, desc) {
-    let translate = this.context.language.translate;
-
-    if (predicate == 'm') {
-      ammoCosts.sort(slotComparator(translate, null, desc));
-    } else {
-      ammoCosts.sort(slotComparator(translate, (a, b) => a[predicate] - b[predicate], desc));
-    }
-  }
-
-  /**
-   * Set retrofit list sort predicate
-   * @param  {string} predicate sort predicate
-   */
-  _sortRetrofitBy(predicate) {
-    let { retroPredicate, retroDesc } = this.state;
-
-    if (retroPredicate == predicate) {
-      retroDesc = !retroDesc;
-    }
-
-    this.setState({ retroPredicate: predicate, retroDesc });
-  }
-
-  /**
-   * Sort retrofit cost list
-   * @param  {Array} retrofitCosts  Retrofit cost list
-   * @param  {string} predicate     Sort predicate
-   * @param  {Boolean} desc         Sort descending
-   */
-  _sortRetrofit(retrofitCosts, predicate, desc) {
-    let translate = this.context.language.translate;
-
-    if (predicate == 'cr') {
-      retrofitCosts.sort((a, b) => a.netCost - b.netCost);
-    } else {
-      retrofitCosts.sort((a , b) => (a[predicate] ? translate(a[predicate]).toLowerCase() : '').localeCompare(b[predicate] ? translate(b[predicate]).toLowerCase() : ''));
-    }
-
-    if (!desc) {
-      retrofitCosts.reverse();
-    }
+    this.setState({ predicate: newPredicate, desc });
   }
 
   /**
@@ -284,43 +141,54 @@ export default class CostSection extends TranslatedComponent {
    */
   _costsTab() {
     let { ship } = this.props;
-    let { shipDiscount, moduleDiscount, insurance } = this.state;
+    let {
+      excluded, shipDiscount, moduleDiscount, insurance, desc, predicate
+    } = this.state;
     let { translate, formats, units } = this.context.language;
     let rows = [];
 
-    for (let i = 0, l = ship.costList.length; i < l; i++) {
-      let item = ship.costList[i];
-      if (item.m && item.m.cost) {
-        let toggle = this._toggleCost.bind(this, item);
-        rows.push(<tr key={i} className={cn('highlight', { disabled: !item.incCost })}>
-          <td className='ptr' style={{ width: '1em' }} onClick={toggle}>{item.m.class + item.m.rating}</td>
-          <td className='le ptr shorten cap' onClick={toggle}>{slotName(translate, item)}</td>
-          <td className='ri ptr' onClick={toggle}>{formats.int(item.discountedCost)}{units.CR}</td>
+    let modules = sortBy(
+      ship.getModules(),
+      (predicate === 'm' ? (m) => m.getItem() : (m) => m.readMeta('cost'))
+    );
+    if (desc) {
+      reverse(modules);
+    }
+    for (let module of modules) {
+      const cost = module.readMeta('cost');
+      const slot = module.getSlot();
+      if (cost) {
+        let toggle = this._toggleExcluded.bind(this, slot);
+        rows.push(<tr key={slot} className={cn('highlight', { disabled: excluded[slot] })}>
+          <td className='ptr' style={{ width: '1em' }} onClick={toggle}>{module.getClassRating()}</td>
+          <td className='le ptr shorten cap' onClick={toggle}>{translate(module.readMeta('type'))}</td>
+          <td className='ri ptr' onClick={toggle}>{formats.int(cost * (1 - moduleDiscount))}{units.CR}</td>
         </tr>);
       }
     }
 
+    const totalCost = ship.get(COST);
     return <div>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead>
           <tr className='main'>
-            <th colSpan='2' className='sortable le' onClick={this._sortCostBy.bind(this,'m')}>
+            <th colSpan='2' className='sortable le' onClick={() => this._sortBy('m')}>
               {translate('module')}
               {shipDiscount ? <u className='cap optional-hide' style={{ marginLeft: '0.5em' }}>{`[${translate('ship')} -${formats.pct(shipDiscount)}]`}</u> : null}
               {moduleDiscount ? <u className='cap optional-hide' style={{ marginLeft: '0.5em' }}>{`[${translate('modules')} -${formats.pct(moduleDiscount)}]`}</u> : null}
             </th>
-            <th className='sortable le' onClick={this._sortCostBy.bind(this, 'cr')} >{translate('credits')}</th>
+            <th className='sortable le' onClick={() => this._sortBy('cr')} >{translate('credits')}</th>
           </tr>
         </thead>
         <tbody>
           {rows}
           <tr className='ri'>
             <td colSpan='2' className='lbl' >{translate('total')}</td>
-            <td className='val'>{formats.int(ship.totalCost)}{units.CR}</td>
+            <td className='val'>{formats.int(totalCost)}{units.CR}</td>
           </tr>
           <tr className='ri'>
             <td colSpan='2' className='lbl'>{translate('insurance')}</td>
-            <td className='val'>{formats.int(ship.totalCost * insurance)}{units.CR}</td>
+            <td className='val'>{formats.int(totalCost * insurance)}{units.CR}</td>
           </tr>
         </tbody>
       </table>
@@ -331,14 +199,62 @@ export default class CostSection extends TranslatedComponent {
    * Open up a window for EDDB with a shopping list of our retrofit components
    */
   _eddbShoppingList() {
-    const { retrofitCosts } = this.state;
+    const {} = this.state;
     const { ship } = this.props;
 
     // Provide unique list of non-PP module EDDB IDs to buy
-    const modIds = retrofitCosts.filter(item => item.retroItem.incCost && item.buyId && !item.buyPp).map(item => item.buyId).filter((v, i, a) => a.indexOf(v) === i);
+    // const modIds = retrofitCosts.filter(item => item.retroItem.incCost && item.buyId && !item.buyPp).map(item => item.buyId).filter((v, i, a) => a.indexOf(v) === i);
 
     // Open up the relevant URL
-    window.open('https://eddb.io/station?m=' + modIds.join(','));
+    // TODO:
+    // window.open('https://eddb.io/station?m=' + modIds.join(','));
+  }
+
+  /**
+   *
+   */
+  _retrofitInfo() {
+    const { ship } = this.props;
+    const { desc, moduleDiscount, predicate, retrofitName } = this.state;
+    const retrofitShip = this._buildRetrofitShip(ship, retrofitName);
+
+    const currentModules = ship.getModules();
+    const oldModules = retrofitShip.getModules();
+    const buyModules = differenceBy(currentModules, oldModules, (m) => m.getItem());
+    const sellModules = differenceBy(oldModules, currentModules, (m) => m.getItem());
+
+    let modules = [];
+    for (let m of buyModules) {
+      const key = `buy_${m.getSlot()}`;
+      modules.push({
+        key,
+        cost: m.readMeta('cost') * (1 - moduleDiscount),
+        buyRating: m.getClassRating(),
+        buyItem: m.readMeta('type'),
+      });
+    }
+    for (let m of sellModules) {
+      const key = `sell_${m.getSlot()}`;
+      modules.push({
+        key,
+        cost: -1 * m.readMeta('cost') * moduleDiscount,
+        sellRating: m.getClassRating(),
+        sellItem: m.readMeta('type'),
+      });
+    }
+
+    let _sortF = undefined;
+    switch (predicate) {
+      case 'cr': _sortF = (o) => o.cost;
+      case 'm':
+      default: _sortF = (o) => o.buyItem || o.sellItem;
+    };
+
+    modules = sortBy(modules, _sortF);
+    if (desc) {
+      reverse(modules);
+    }
+    return modules;
   }
 
   /**
@@ -346,28 +262,36 @@ export default class CostSection extends TranslatedComponent {
    * @return {React.Component} Tab contents
    */
   _retrofitTab() {
-    let { retrofitTotal, retrofitCosts, moduleDiscount, retrofitName } = this.state;
+    let { excluded, moduleDiscount, retrofitName } = this.state;
     const { termtip, tooltip } = this.context;
     let { translate, formats, units } = this.context.language;
     let int = formats.int;
-    let rows = [], options = [<option key='stock' value=''>{translate('Stock')}</option>];
+    let options = [<option key='stock' value=''>{translate('Stock')}</option>];
 
     for (let opt of this.state.buildOptions) {
       options.push(<option key={opt} value={opt}>{opt}</option>);
     }
 
-    if (retrofitCosts.length) {
-      for (let i = 0, l = retrofitCosts.length; i < l; i++) {
-        let item = retrofitCosts[i];
-        rows.push(<tr key={i} className={cn('highlight', { disabled: !item.retroItem.incCost })} onClick={this._toggleRetrofitCost.bind(this, item)}>
-          <td className='ptr' style={{ width: '1em' }}>{item.sellClassRating}</td>
-          <td className='le ptr shorten cap'>{translate(item.sellName)}</td>
-          <td className='ptr' style={{ width: '1em' }}>{item.buyClassRating}</td>
-          <td className='le ptr shorten cap'>{translate(item.buyName)}</td>
-          <td colSpan='2' className={cn('ri ptr', item.retroItem.incCost ? item.netCost > 0 ? 'warning' : 'secondary-disabled' : 'disabled')}>{int(item.netCost)}{units.CR}</td>
-        </tr>);
-      }
-    } else {
+    const retrofitInfo = this._retrofitInfo();
+    const retrofitTotal = 0;
+    let rows = [];
+    for (let i of retrofitInfo) {
+      const disabled = excluded[i.key];
+      rows.push(
+        <tr key={i.key} className={cn('highlight', { disabled })}
+          onClick={() => this._toggleExcluded(i.key)}>
+          <td className='ptr' style={{ width: '1em' }}>{i.buyRating}</td>
+          <td className='le ptr shorten cap'>{translate(i.buyItem)}</td>
+          <td className='ptr' style={{ width: '1em' }}>{i.sellRating}</td>
+          <td className='le ptr shorten cap'>{translate(i.sellItem)}</td>
+          <td colSpan='2' className={cn('ri ptr', disabled ? 'disabled' : (i.cost < 0 ? 'secondary-disabled' : 'warning'))}>
+            {int(i.cost)}{units.CR}
+          </td>
+        </tr>
+      );
+      retrofitTotal += disabled ? 0 : i.cost;
+    }
+    if (!rows.length) {
       rows = <tr><td colSpan='7' style={{ padding: '3em 0' }}>{translate('PHRASE_NO_RETROCH')}</td></tr>;
     }
 
@@ -376,9 +300,9 @@ export default class CostSection extends TranslatedComponent {
         <table style={{ width: '100%' }}>
           <thead>
             <tr className='main'>
-              <th colSpan='2' className='sortable le' onClick={this._sortRetrofitBy.bind(this, 'sellName')}>{translate('sell')}</th>
-              <th colSpan='2' className='sortable le' onClick={this._sortRetrofitBy.bind(this, 'buyName')}>{translate('buy')}</th>
-              <th colSpan='2' className='sortable le' onClick={this._sortRetrofitBy.bind(this, 'cr')}>
+              <th colSpan='2' className='sortable le' onClick={() => this._sortBy('m')}>{translate('sell')}</th>
+              <th colSpan='2' className='sortable le' onClick={() => this._sortBy('m')}>{translate('buy')}</th>
+              <th colSpan='2' className='sortable le' onClick={() => this._sortBy('cr')}>
                 {translate('net cost')}
                 {moduleDiscount ? <u className='cap optional-hide' style={{ marginLeft: '0.5em' }}>{`[${translate('modules')} -${formats.pct(moduleDiscount)}]`}</u> : null}
               </th>
@@ -408,63 +332,50 @@ export default class CostSection extends TranslatedComponent {
     </div>;
   }
 
-
   /**
-   * Update retrofit costs
-   * @param  {Ship} ship          Ship instance
-   * @param  {Ship} retrofitShip  Retrofit Ship instance
+   *
+   * @param {*} modules
    */
-  _updateRetrofit(ship, retrofitShip) {
-    let retrofitCosts = [];
-    let retrofitTotal = 0, i, l, item;
+  _ammoInfo() {
+    const { ship } = this.props;
+    const { desc, predicate } = this.state;
 
-    if (ship.bulkheads.m.index != retrofitShip.bulkheads.m.index) {
-      item = {
-        buyClassRating: ship.bulkheads.m.class + ship.bulkheads.m.rating,
-        buyId: ship.bulkheads.m.eddbID,
-        buyPp: ship.bulkheads.m.pp,
-        buyName: ship.bulkheads.m.name,
-        sellClassRating: retrofitShip.bulkheads.m.class + retrofitShip.bulkheads.m.rating,
-        sellName: retrofitShip.bulkheads.m.name,
-        netCost: ship.bulkheads.discountedCost - retrofitShip.bulkheads.discountedCost,
-        retroItem: retrofitShip.bulkheads
-      };
-      retrofitCosts.push(item);
-      if (retrofitShip.bulkheads.incCost) {
-        retrofitTotal += item.netCost;
+    let info = [{
+      key: 'fuel',
+      item: 'Fuel',
+      qty: ship.get(FUEL_CAPACITY),
+      unitCost: 50,
+      cost: 50 * ship.get(FUEL_CAPACITY),
+    }];
+    for (let m of ship.getModules()) {
+      const rebuilds = m.get('bays') * m.get('rebuildsperbay');
+      const ammo = (m.get('ammomaximum') + m.get('ammoclipsize')) || rebuilds;
+      if (ammo) {
+        const unitCost = m.readMeta('ammocost');
+        info.push({
+          key: `restock_${m.getSlot()}`,
+          rating: m.getClassRating(),
+          item: m.readMeta('type'),
+          qty: ammo,
+          unitCost, cost: unitCost * ammo,
+        });
       }
     }
 
-    for (let g in { standard: 1, internal: 1, hardpoints: 1 }) {
-      let retroSlotGroup = retrofitShip[g];
-      let slotGroup = ship[g];
-      for (i = 0, l = slotGroup.length; i < l; i++) {
-        const modId = slotGroup[i].m ? slotGroup[i].m.eddbID : null;
-        const retroModId = retroSlotGroup[i].m ? retroSlotGroup[i].m.eddbID : null;
-        if (modId != retroModId) {
-          item = { netCost: 0, retroItem: retroSlotGroup[i] };
-          if (slotGroup[i].m) {
-            item.buyId = slotGroup[i].m.eddbID,
-            item.buyPp = slotGroup[i].m.pp,
-            item.buyName = slotGroup[i].m.name || slotGroup[i].m.grp;
-            item.buyClassRating = slotGroup[i].m.class + slotGroup[i].m.rating;
-            item.netCost = slotGroup[i].discountedCost;
-          }
-          if (retroSlotGroup[i].m) {
-            item.sellName = retroSlotGroup[i].m.name || retroSlotGroup[i].m.grp;
-            item.sellClassRating = retroSlotGroup[i].m.class + retroSlotGroup[i].m.rating;
-            item.netCost -= retroSlotGroup[i].discountedCost;
-          }
-          retrofitCosts.push(item);
-          if (retroSlotGroup[i].incCost) {
-            retrofitTotal += item.netCost;
-          }
-        }
-      }
+    let _sortF = undefined;
+    switch (predicate) {
+      case 'cr': _sortF = (o) => o.cost; break;
+      case 'qty': _sortF = (o) => o.qty; break;
+      case 'cost': _sortF = (o) => o.unitCost; break;
+      case 'm':
+      default: _sortF = (o) => o.item;
+    }
+    info = sortBy(info, _sortF);
+    if (desc) {
+      reverse(info);
     }
 
-    this.setState({ retrofitCosts, retrofitTotal });
-    this._sortRetrofit(retrofitCosts, this.state.retroPredicate, this.state.retroDesc);
+    return info;
   }
 
   /**
@@ -472,20 +383,24 @@ export default class CostSection extends TranslatedComponent {
    * @return {React.Component} Tab contents
    */
   _ammoTab() {
-    let { ammoTotal, ammoCosts } = this.state;
-    let { translate, formats, units } = this.context.language;
-    let int = formats.int;
-    let rows = [];
+    const { excluded } = this.state;
+    const { translate, formats, units } = this.context.language;
+    const int = formats.int;
+    const rows = [];
 
-    for (let i = 0, l = ammoCosts.length; i < l; i++) {
-      let item = ammoCosts[i];
-      rows.push(<tr key={i} className='highlight'>
-        <td style={{ width: '1em' }}>{item.m.class + item.m.rating}</td>
-        <td className='le shorten cap'>{slotName(translate, item)}</td>
-        <td className='ri'>{int(item.max)}</td>
-        <td className='ri'>{int(item.cost)}{units.CR}</td>
-        <td className='ri'>{int(item.total)}{units.CR}</td>
+    const ammoInfo = this._ammoInfo();
+    let total = 0;
+    for (let i of ammoInfo) {
+      const disabled = excluded[i.key];
+      rows.push(<tr key={i.key} onClick={() => this._toggleExcluded(i.key)}
+        className={cn('highlight', { disabled })}>
+        <td style={{ width: '1em' }}>{i.rating}</td>
+        <td className='le shorten cap'>{translate(i.item)}</td>
+        <td className='ri'>{int(i.qty)}</td>
+        <td className='ri'>{int(i.unitCost)}{units.CR}</td>
+        <td className='ri'>{int(i.cost)}{units.CR}</td>
       </tr>);
+      total += disabled ? 0 : i.cost;
     }
 
     return <div>
@@ -493,119 +408,22 @@ export default class CostSection extends TranslatedComponent {
         <table style={{ width: '100%' }}>
           <thead>
             <tr className='main'>
-              <th colSpan='2' className='sortable le' onClick={this._sortAmmoBy.bind(this, 'm')} >{translate('module')}</th>
-              <th colSpan='1' className='sortable le' onClick={this._sortAmmoBy.bind(this, 'max')} >{translate('qty')}</th>
-              <th colSpan='1' className='sortable le' onClick={this._sortAmmoBy.bind(this, 'cost')} >{translate('unit cost')}</th>
-              <th className='sortable le' onClick={this._sortAmmoBy.bind(this, 'total')}>{translate('subtotal')}</th>
+              <th colSpan='2' className='sortable le' onClick={() => this._sortBy('m')}>{translate('module')}</th>
+              <th colSpan='1' className='sortable le' onClick={() => this._sortBy('qty')}>{translate('qty')}</th>
+              <th colSpan='1' className='sortable le' onClick={() => this._sortBy('cost')}>{translate('unit cost')}</th>
+              <th className='sortable le' onClick={() => this._sortBy('cr')}>{translate('subtotal')}</th>
             </tr>
           </thead>
           <tbody>
             {rows}
             <tr className='ri'>
               <td colSpan='4' className='lbl' >{translate('total')}</td>
-              <td className='val'>{int(ammoTotal)}{units.CR}</td>
+              <td className='val'>{int(total)}{units.CR}</td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>;
-  }
-
-  /**
-   * Recalculate all ammo costs
-   * @param  {Ship} ship  Ship instance
-   */
-  _updateAmmoCosts(ship) {
-    let ammoCosts = [], ammoTotal = 0, item, q, limpets = 0, srvs = 0, scoop = false;
-
-    for (let g in { standard: 1, internal: 1, hardpoints: 1 }) {
-      let slotGroup = ship[g];
-      for (let i = 0, l = slotGroup.length; i < l; i++) {
-        if (slotGroup[i].m) {
-          // Special cases needed for SCB, AFMU, and limpet controllers since they don't use standard ammo/clip
-          q = 0;
-          switch (slotGroup[i].m.grp) {
-            case 'fs': // Skip fuel calculation if scoop present
-              scoop = true;
-              break;
-            case 'scb':
-              q = slotGroup[i].m.getAmmo() + 1;
-              break;
-            case 'am':
-              q = slotGroup[i].m.getAmmo();
-              break;
-            case 'pv':
-              srvs += slotGroup[i].m.getBays();
-              break;
-            case 'fx': case 'hb': case 'cc': case 'pc':
-              limpets = ship.cargoCapacity;
-              break;
-            default:
-              q = slotGroup[i].m.getClip() + slotGroup[i].m.getAmmo();
-          }
-          // Calculate ammo costs only if a cost is specified
-          if (slotGroup[i].m.ammocost > 0) {
-            item = {
-              m: slotGroup[i].m,
-              max: q,
-              cost: slotGroup[i].m.ammocost,
-              total: q * slotGroup[i].m.ammocost
-            };
-            ammoCosts.push(item);
-            ammoTotal += item.total;
-          }
-          // Add fighters
-          if (slotGroup[i].m.grp === 'fh') {
-            item = {
-              m: slotGroup[i].m,
-              max: slotGroup[i].m.getRebuildsPerBay() * slotGroup[i].m.getBays(),
-              cost: slotGroup[i].m.fightercost,
-              total: slotGroup[i].m.getRebuildsPerBay() * slotGroup[i].m.getBays() * slotGroup[i].m.fightercost
-            };
-            ammoCosts.push(item);
-            ammoTotal += item.total;
-          }
-        }
-      }
-    }
-
-    // Limpets if controllers exist and cargo space available
-    if (limpets > 0) {
-      item = {
-        m: { name: 'limpets', class: '', rating: '' },
-        max: ship.cargoCapacity,
-        cost: 101,
-        total: ship.cargoCapacity * 101
-      };
-      ammoCosts.push(item);
-      ammoTotal += item.total;
-    }
-
-    if (srvs > 0) {
-      item = {
-        m: { name: 'SRVs', class: '', rating: '' },
-        max: srvs,
-        cost: 1030,
-        total: srvs * 1030
-      };
-      ammoCosts.push(item);
-      ammoTotal += item.total;
-    }
-
-    // Calculate refuel costs if no scoop present
-    if (!scoop) {
-      item = {
-        m: { name: 'fuel', class: '', rating: '' },
-        max: ship.fuelCapacity,
-        cost: 50,
-        total: ship.fuelCapacity * 50
-      };
-      ammoCosts.push(item);
-      ammoTotal += item.total;
-    }
-
-    this.setState({ ammoTotal, ammoCosts });
-    this._sortAmmo(ammoCosts, this.state.ammoPredicate, this.state.ammoDesc);
   }
 
   /**
@@ -615,64 +433,7 @@ export default class CostSection extends TranslatedComponent {
     this.listeners = [
       Persist.addListener('discounts', this._onDiscountChanged.bind(this)),
       Persist.addListener('insurance', this._onInsuranceChanged.bind(this)),
-      Persist.addListener('builds', this._onBuildsChanged.bind(this)),
     ];
-    this._updateAmmoCosts(this.props.ship);
-    this._updateRetrofit(this.props.ship, this.state.retrofitShip);
-    this._sortCost(this.props.ship);
-  }
-
-  /**
-   * Update state based on property and context changes
-   * @param  {Object} nextProps   Incoming/Next properties
-   * @param  {Object} nextContext Incoming/Next context
-   */
-  componentWillReceiveProps(nextProps, nextContext) {
-    let retrofitShip = this.state.retrofitShip;
-
-    if (nextProps.ship != this.props.ship) { // Ship has changed
-      let nextId = nextProps.ship.id;
-      let retrofitName = this._defaultRetrofitName(nextId, nextProps.buildName);
-      retrofitShip = this._buildRetrofitShip(nextId, retrofitName, nextId == this.props.ship.id ? retrofitShip : null);
-      this.setState({
-        retrofitShip,
-        retrofitName,
-        buildOptions: Persist.getBuildsNamesFor(nextId)
-      });
-    }
-
-    if (nextProps.ship != this.props.ship || nextProps.code != this.props.code) {
-      nextProps.ship.applyDiscounts(Persist.getShipDiscount(), Persist.getModuleDiscount());
-      this._updateAmmoCosts(nextProps.ship);
-      this._updateRetrofit(nextProps.ship, retrofitShip);
-      this._sortCost(nextProps.ship);
-    }
-  }
-
-  /**
-   * Sort lists before render
-   * @param  {Object} nextProps   Incoming/Next properties
-   * @param  {Object} nextState Incoming/Next state
-   */
-  componentWillUpdate(nextProps, nextState) {
-    let state = this.state;
-
-    switch (nextState.tab) {
-      case 'ammo':
-        if (state.ammoPredicate != nextState.ammoPredicate || state.ammoDesc != nextState.ammoDesc) {
-          this._sortAmmo(nextState.ammoCosts, nextState.ammoPredicate, nextState.ammoDesc);
-        }
-        break;
-      case 'retrofit':
-        if (state.retroPredicate != nextState.retroPredicate || state.retroDesc != nextState.retroDesc) {
-          this._sortRetrofit(nextState.retrofitCosts, nextState.retroPredicate, nextState.retroDesc);
-        }
-        break;
-      default:
-        if (state.costPredicate != nextState.costPredicate || state.costDesc != nextState.costDesc) {
-          this._sortCost(nextProps.ship, nextState.costPredicate, nextState.costDesc);
-        }
-    }
   }
 
   /**
