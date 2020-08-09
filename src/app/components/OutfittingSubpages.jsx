@@ -11,6 +11,7 @@ import Movement from './Movement';
 import Offence from './Offence';
 import Defence from './Defence';
 import WeaponDamageChart from './WeaponDamageChart';
+import autoBind from 'auto-bind';
 
 /**
  * Outfitting subpages
@@ -42,10 +43,7 @@ export default class OutfittingSubpages extends TranslatedComponent {
    */
   constructor(props) {
     super(props);
-    this._powerTab = this._powerTab.bind(this);
-    this._profilesTab = this._profilesTab.bind(this);
-    this._offenceTab = this._offenceTab.bind(this);
-    this._defenceTab = this._defenceTab.bind(this);
+    autoBind(this);
 
     this.state = {
       tab: Persist.getOutfittingTab() || 'power',

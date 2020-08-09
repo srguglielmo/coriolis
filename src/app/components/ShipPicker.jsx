@@ -5,6 +5,7 @@ import { Ships } from 'coriolis-data/dist';
 import { Rocket } from './SvgIcons';
 import Persist from '../stores/Persist';
 import cn from 'classnames';
+import autoBind from 'auto-bind';
 
 /**
  * Ship picker
@@ -28,11 +29,7 @@ export default class ShipPicker extends TranslatedComponent {
    */
   constructor(props, context) { // eslint-disable-line
     super(props);
-
-    this.shipOrder = Object.keys(Ships).sort();
-    this._toggleMenu = this._toggleMenu.bind(this);
-    this._closeMenu = this._closeMenu.bind(this);
-
+    autoBind(this);
     this.state = { menuOpen: false };
   }
 

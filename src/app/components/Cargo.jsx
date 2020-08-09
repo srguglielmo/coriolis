@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import Slider from '../components/Slider';
+import autoBind from 'auto-bind';
 
 /**
  * Cargo slider
@@ -21,8 +22,7 @@ export default class Cargo extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
-
-    this._cargoChange = this._cargoChange.bind(this);
+    autoBind(this);
   }
 
   /**

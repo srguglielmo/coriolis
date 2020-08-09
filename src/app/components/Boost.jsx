@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
+import autoBind from 'auto-bind';
 
 /**
  * Boost displays a boost button that toggles bosot
@@ -21,10 +22,7 @@ export default class Boost extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
-    const { ship, boost } = props;
-
-    this._keyDown = this._keyDown.bind(this);
-    this._toggleBoost = this._toggleBoost.bind(this);
+    autoBind(this);
   }
 
   /**

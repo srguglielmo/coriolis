@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import Slider from '../components/Slider';
+import autoBind from 'auto-bind';
 
 /**
  * Fuel slider
@@ -21,8 +22,7 @@ export default class Fuel extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
-
-    this._fuelChange = this._fuelChange.bind(this);
+    autoBind(this);
   }
 
   /**
