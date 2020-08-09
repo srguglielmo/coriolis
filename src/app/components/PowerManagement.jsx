@@ -46,7 +46,6 @@ export default class PowerManagement extends TranslatedComponent {
   static propTypes = {
     ship: PropTypes.instanceOf(Ship).isRequired,
     code: PropTypes.string.isRequired,
-    onChange: PropTypes.func.isRequired
   };
 
   /**
@@ -108,19 +107,6 @@ export default class PowerManagement extends TranslatedComponent {
   }
 
   /**
-   * Creates a callback for flipping the enabled state of a module.
-   * @param {Module} m Module to flip
-   * @returns {Function} Callback
-   */
-  _flipEnabledCb(m) {
-    const { onChange } = this.props;
-    return () => {
-      m.setEnabled();
-      onChange();
-    };
-  }
-
-  /**
    * Creates a callback that changes the power priority for the given module
    * based on the given delta.
    * @param {Module} m Module to set the priority for
@@ -128,13 +114,11 @@ export default class PowerManagement extends TranslatedComponent {
    * @returns {Function} Callback
    */
   _prioCb(m, delta) {
-    const { onChange } = this.props;
     return () => {
       const prio = m.getPowerPriority();
       const newPrio = Math.max(0, prio + delta);
       if (0 < newPrio) {
         m.setPowerPriority(newPrio);
-        onChange();
       }
     };
   }
@@ -153,7 +137,7 @@ export default class PowerManagement extends TranslatedComponent {
     let modules = this._sortAndFilter(ship.getModules());
     for (let m of modules) {
       let retractedElem = null, deployedElem = null;
-      const flipEnabled = this._flipEnabledCb(m);
+      const flipEnabled = () => m.setEnabled();
       if (m.isEnabled()) {
         let powered = m.isPowered();
         retractedElem = <td className='ptr upp' onClick={flipEnabled}>{getPowerIcon(powered.retracted)}</td>;
