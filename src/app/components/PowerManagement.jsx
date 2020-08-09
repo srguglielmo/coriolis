@@ -117,7 +117,7 @@ export default class PowerManagement extends TranslatedComponent {
     return () => {
       const prio = m.getPowerPriority();
       const newPrio = Math.max(0, prio + delta);
-      if (0 < newPrio) {
+      if (0 <= newPrio) {
         m.setPowerPriority(newPrio);
       }
     };
