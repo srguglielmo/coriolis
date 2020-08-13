@@ -3,100 +3,34 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import * as Calc from '../shipyard/Calculations';
 import PieChart from './PieChart';
-import { nameComparator } from '../utils/SlotFunctions';
 import { MountFixed, MountGimballed, MountTurret } from './SvgIcons';
+import { Ship } from 'ed-forge';
 import autoBind from 'auto-bind';
+import { DAMAGE_METRICS } from 'ed-forge/lib/ship-stats';
+import { clone, mapValues, mergeWith, reverse, sortBy, sum, toPairs, values } from 'lodash';
 
 /**
- * Generates an internationalization friendly weapon comparator that will
- * sort by specified property (if provided) then by name/group, class, rating
- * @param  {function} translate       Translation function
- * @param  {function} propComparator  Optional property comparator
- * @param  {boolean} desc             Use descending order
- * @return {function}                 Comparator function for names
+ * Turns an object into a tooltip.
+ * @param {function} translate Translate function
+ * @param {object} o Map to make the tooltip from
+ * @returns {React.Component} Tooltip
  */
-export function weaponComparator(translate, propComparator, desc) {
-  return (a, b) => {
-    if (!desc) {  // Flip A and B if ascending order
-      let t = a;
-      a = b;
-      b = t;
-    }
-
-    // If a property comparator is provided use it first
-    let diff = propComparator ? propComparator(a, b) : nameComparator(translate, a, b);
-
-    if (diff) {
-      return diff;
-    }
-
-    // Property matches so sort by name / group, then class, rating
-    if (a.name === b.name && a.grp === b.grp) {
-      if(a.class == b.class) {
-        return a.rating > b.rating ? 1 : -1;
-      }
-      return a.class - b.class;
-    }
-
-    return nameComparator(translate, a, b);
-  };
-}
-
-/**
- * Creates a tooltip that shows damage by type.
- * @param {function} translate    Translation function
- * @param {Object} formats        Object that holds format functions
- * @param {Calc.SDps} sdpsObject  Object that holds sdps split up by type
- * @returns {Array} Tooltip
- */
-function getSDpsTooltip(translate, formats, sdpsObject) {
-  return Object.keys(sdpsObject).filter(key => sdpsObject[key])
-    .map(key => {
-      return (
-        <div key={key}>
-          {translate(key) + ' ' + formats.f1(sdpsObject[key])}
-        </div>
-      );
-    });
+function objToTooltip(translate, o) {
+  return toPairs(o)
+    .filter(([k, v]) => Boolean(v))
+    .map(([k, v]) => <div key={k}>{`${translate(k)}: ${v}`}</div>);
 }
 
 /**
  * Returns a data object used by {@link PieChart} that shows damage by type.
- * @param {function} translate    Translation function
- * @param {Calc.SDps} sdpsObject  Object that holds sdps split up by type
- * @returns {Object}              Data object
+ * @param {function} translate  Translation function
+ * @param {Calc.SDps} o         Object that holds sdps split up by type
+ * @returns {Object}            Data object
  */
-function getSDpsData(translate, sdpsObject) {
-  return Object.keys(sdpsObject).map(key => {
-    return {
-      value: Math.round(sdpsObject[key]),
-      label: translate(key)
-    };
+function objToPie(translate, o) {
+  return toPairs(o).map(([k, value]) => {
+    return { label: translate(k), value };
   });
-}
-
-/**
- * Adds all damage of `add` onto `addOn`.
- * @param {Calc.SDps} addOn Object that holds sdps split up by type (will be mutated)
- * @param {Calc.SDps} add   Object that holds sdps split up by type
- */
-function addSDps(addOn, add) {
-  Object.keys(addOn).map(k => addOn[k] += (add[k] ? add[k] : 0));
-}
-
-/**
- * Calculates the overall sdps of an sdps object.
- * @param {Calc.SDps} sdpsObject Object that holds sdps spluit up by type
- */
-function sumSDps(sdpsObject) {
-  if (sdpsObject.total) {
-    return sdpsObject.total;
-  }
-
-  return Object.keys(sdpsObject).reduce(
-    (acc, k) => acc + (sdpsObject[k] ? sdpsObject[k] : 0),
-    0
-  );
 }
 
 /**
@@ -109,12 +43,10 @@ function sumSDps(sdpsObject) {
  */
 export default class Offence extends TranslatedComponent {
   static propTypes = {
-    marker: PropTypes.string.isRequired,
-    ship: PropTypes.object.isRequired,
-    opponent: PropTypes.object.isRequired,
-    engagementrange: PropTypes.number.isRequired,
-    wep: PropTypes.number.isRequired,
-    opponentSys: PropTypes.number.isRequired
+    code: PropTypes.string.isRequired,
+    ship: PropTypes.instanceOf(Ship).isRequired,
+    opponent: PropTypes.instanceOf(Ship).isRequired,
+    engagementRange: PropTypes.number.isRequired,
   };
 
   /**
@@ -123,28 +55,12 @@ export default class Offence extends TranslatedComponent {
    */
   constructor(props) {
     super(props);
+    autoBind(this);
 
-    this._sort = this._sort.bind(this);
-
-    const damage = Calc.offenceMetrics(props.ship, props.opponent, props.wep, props.opponentSys, props.engagementrange);
     this.state = {
-      predicate: 'n',
+      predicate: 'classRating',
       desc: true,
-      damage
     };
-  }
-
-  /**
-   * Update the state if our properties change
-   * @param  {Object} nextProps   Incoming/Next properties
-   * @return {boolean}            Returns true if the component should be rerendered
-   */
-  componentWillReceiveProps(nextProps) {
-    if (this.props.marker != nextProps.marker || this.props.eng != nextProps.eng) {
-      const damage = Calc.offenceMetrics(nextProps.ship, nextProps.opponent, nextProps.wep, nextProps.opponentSys, nextProps.engagementrange);
-      this.setState({ damage });
-    }
-    return true;
   }
 
   /**
@@ -152,35 +68,8 @@ export default class Offence extends TranslatedComponent {
    * @param  {string} predicate Sort predicate
    */
   _sortOrder(predicate) {
-    let desc = this.state.desc;
-
-    if (predicate == this.state.predicate) {
-      desc = !desc;
-    } else {
-      desc = true;
-    }
-
-    this._sort(predicate, desc);
+    let desc = predicate == this.state.predicate ? !this.state.desc : true;
     this.setState({ predicate, desc });
-  }
-
-  /**
-   * Sorts the weapon list
-   * @param  {string} predicate   Sort predicate
-   * @param  {Boolean} desc       Sort order descending
-   */
-  _sort(predicate, desc) {
-    let comp = weaponComparator.bind(null, this.context.language.translate);
-
-    switch (predicate) {
-      case 'n': comp = comp(null, desc); break;
-      case 'esdpss': comp = comp((a, b) => a.sdps.shields.total - b.sdps.shields.total, desc); break;
-      case 'es': comp = comp((a, b) => a.effectiveness.shields.total - b.effectiveness.shields.total, desc); break;
-      case 'esdpsh': comp = comp((a, b) => a.sdps.armour.total - b.sdps.armour.total, desc); break;
-      case 'eh': comp = comp((a, b) => a.effectiveness.armour.total - b.effectiveness.armour.total, desc); break;
-    }
-
-    this.state.damage.sort(comp);
   }
 
   /**
@@ -188,81 +77,174 @@ export default class Offence extends TranslatedComponent {
    * @return {React.Component} contents
    */
   render() {
-    const { ship, opponent, wep, engagementrange } = this.props;
+    const { ship } = this.props;
     const { language, tooltip, termtip } = this.context;
     const { formats, translate, units } = language;
-    const { damage } = this.state;
     const sortOrder = this._sortOrder;
 
-    const pd = ship.standard[4].m;
+    const damage = ship.getMetrics(DAMAGE_METRICS);
+    const portions = {
+      Absolute: damage.types.abs,
+      Explosive: damage.types.expl,
+      Kinetic: damage.types.kin,
+      Thermic: damage.types.therm,
+    };
 
-    const opponentShields = Calc.shieldMetrics(opponent, 4);
-    const opponentArmour = Calc.armourMetrics(opponent);
+    const oppShield = ship.getOpponent().getShield();
+    const shieldMults = {
+      Absolute: 1,
+      Explosive: oppShield.explosive.damageMultiplier,
+      Kinetic: oppShield.kinetic.damageMultiplier,
+      Thermic: oppShield.thermal.damageMultiplier,
+    };
 
-    const timeToDrain = Calc.timeToDrainWep(ship, wep);
+    const oppArmour = ship.getOpponent().getArmour();
+    const armourMults = {
+      Absolute: 1,
+      Explosive: oppArmour.explosive.damageMultiplier,
+      Kinetic: oppArmour.kinetic.damageMultiplier,
+      Thermic: oppArmour.thermal.damageMultiplier,
+    };
 
+    let rows = [];
+    for (let weapon of ship.getHardpoints()) {
+      const sdps = weapon.get('sustaineddamagepersecond');
+      const byRange = weapon.getRangeEffectiveness();
+      const weaponPortions = {
+        Absolute: weapon.get('absolutedamageportion'),
+        Explosive: weapon.get('explosivedamageportion'),
+        Kinetic: weapon.get('kineticdamageportion'),
+        Thermic: weapon.get('thermicdamageportion'),
+      };
+      const baseSdpsTooltip = objToTooltip(
+        translate,
+        mapValues(weaponPortions, (p) => formats.f1(sdps * p)),
+      );
 
-    let totalSEps = 0;
-    let totalSDpsObject = { 'absolute': 0, 'explosive': 0, 'kinetic': 0, 'thermal': 0 };
-    let shieldsSDpsObject = { 'absolute': 0, 'explosive': 0, 'kinetic': 0, 'thermal': 0 };
-    let armourSDpsObject = { 'absolute': 0, 'explosive': 0, 'kinetic': 0, 'thermal': 0 };
+      const bySys = oppShield.absolute.bySys;
+      const shieldResEfts = mergeWith(
+        clone(weaponPortions),
+        shieldMults,
+        (objV, srcV) => objV * srcV
+      );
+      const byShieldRes = sum(values(shieldResEfts));
+      const shieldsSdpsTooltip = objToTooltip(
+        translate,
+        mapValues(
+          shieldResEfts,
+          (mult) => formats.f1(byRange * mult * bySys * sdps),
+        ),
+      );
+      const shieldsEftTooltip = objToTooltip(
+        translate,
+        {
+          range: formats.pct1(byRange),
+          resistance: formats.pct1(byShieldRes),
+          'power distributor': formats.pct1(bySys),
+        },
+      );
+      const shieldEft = byRange * byShieldRes * bySys;
 
-    const rows = [];
-    for (let i = 0; i < damage.length; i++) {
-      const weapon = damage[i];
+      const byHardness = weapon.getArmourEffectiveness();
+      const armourResEfts = mergeWith(
+        clone(weaponPortions),
+        armourMults,
+        (objV, srcV) => objV * srcV,
+      );
+      const byArmourRes = sum(values(armourResEfts));
+      const armourSdpsTooltip = objToTooltip(
+        translate,
+        mapValues(
+          armourResEfts,
+          (mult) => formats.f1(byRange * mult * byHardness * sdps)
+        ),
+      );
+      const armourEftTooltip = objToTooltip(
+        translate,
+        {
+          range: formats.pct1(byRange),
+          resistance: formats.pct1(byArmourRes),
+          hardness: formats.pct1(byHardness),
+        },
+      );
+      const armourEft = byRange * byArmourRes * byHardness;
 
-      totalSEps += weapon.seps;
-      addSDps(totalSDpsObject, weapon.sdps.base);
-      addSDps(shieldsSDpsObject, weapon.sdps.shields);
-      addSDps(armourSDpsObject, weapon.sdps.armour);
-
-      const baseSDpsTooltipDetails = getSDpsTooltip(translate, formats, weapon.sdps.base);
-
-      const effectivenessShieldsTooltipDetails = [];
-      effectivenessShieldsTooltipDetails.push(<div key='range'>{translate('range') + ' ' + formats.pct1(weapon.effectiveness.shields.range)}</div>);
-      effectivenessShieldsTooltipDetails.push(<div key='resistance'>{translate('resistance') + ' ' + formats.pct1(weapon.effectiveness.shields.resistance)}</div>);
-      effectivenessShieldsTooltipDetails.push(<div key='power distributor'>{translate('power distributor') + ' ' + formats.pct1(weapon.effectiveness.shields.sys)}</div>);
-
-      const effectiveShieldsSDpsTooltipDetails = getSDpsTooltip(translate, formats, weapon.sdps.armour);
-
-      const effectivenessArmourTooltipDetails = [];
-      effectivenessArmourTooltipDetails.push(<div key='range'>{translate('range') + ' ' + formats.pct1(weapon.effectiveness.armour.range)}</div>);
-      effectivenessArmourTooltipDetails.push(<div key='resistance'>{translate('resistance') + ' ' + formats.pct1(weapon.effectiveness.armour.resistance)}</div>);
-      effectivenessArmourTooltipDetails.push(<div key='hardness'>{translate('hardness') + ' ' + formats.pct1(weapon.effectiveness.armour.hardness)}</div>);
-
-      const effectiveArmourSDpsTooltipDetails = getSDpsTooltip(translate, formats, weapon.sdps.armour);
-
-      rows.push(
-        <tr key={weapon.id}>
-          <td className='ri'>
-            {weapon.mount == 'F' ? <span onMouseOver={termtip.bind(null, 'fixed')} onMouseOut={tooltip.bind(null, null)}><MountFixed className='icon'/></span> : null}
-            {weapon.mount == 'G' ? <span onMouseOver={termtip.bind(null, 'gimballed')} onMouseOut={tooltip.bind(null, null)}><MountGimballed /></span> : null}
-            {weapon.mount == 'T' ? <span onMouseOver={termtip.bind(null, 'turreted')} onMouseOut={tooltip.bind(null, null)}><MountTurret /></span> : null}
-            {weapon.classRating} {translate(weapon.name)}
-            {weapon.engineering ? ' (' + weapon.engineering + ')' : null }
-          </td>
-          <td className='ri'><span onMouseOver={termtip.bind(null, baseSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>{formats.f1(weapon.sdps.base.total)}</span></td>
-          <td className='ri'><span onMouseOver={termtip.bind(null, effectiveShieldsSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>{formats.f1(weapon.sdps.shields.total)}</span></td>
-          <td className='ri'><span onMouseOver={termtip.bind(null, effectivenessShieldsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>{formats.pct1(weapon.effectiveness.shields.total)}</span></td>
-          <td className='ri'><span onMouseOver={termtip.bind(null, effectiveArmourSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>{formats.f1(weapon.sdps.armour.total)}</span></td>
-          <td className='ri'><span onMouseOver={termtip.bind(null, effectivenessArmourTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>{formats.pct1(weapon.effectiveness.armour.total)}</span></td>
-        </tr>);
+      const bp = weapon.getBlueprint();
+      const grade = weapon.getBlueprintGrade();
+      const exp = weapon.getExperimental();
+      let bpTitle = `${translate(bp)} ${translate('grade')} ${grade}`;
+      if (exp) {
+        bpTitle += `, ${translate(exp)}`;
+      }
+      rows.push({
+        slot: weapon.getSlot(),
+        mount: weapon.mount,
+        classRating: weapon.getClassRating(),
+        type: weapon.readMeta('type'),
+        bpTitle: bp ? ` (${bpTitle})` : null,
+        sdps,
+        baseSdpsTooltip,
+        shieldSdps: sdps * shieldEft,
+        shieldEft,
+        shieldsSdpsTooltip,
+        shieldsEftTooltip,
+        armourSdps: sdps * armourEft,
+        armourEft,
+        armourSdpsTooltip,
+        armourEftTooltip,
+      });
+    }
+    const { predicate, desc } = this.state;
+    rows = sortBy(rows, (row) => row[predicate]);
+    if (desc) {
+      reverse(rows);
     }
 
-    const totalSDps = sumSDps(totalSDpsObject);
-    const totalSDpsTooltipDetails = getSDpsTooltip(translate, formats, totalSDpsObject);
-    const totalSDpsData = getSDpsData(translate, totalSDpsObject);
+    const sdpsTooltip = objToTooltip(
+      translate,
+      mapValues(portions, (p) => formats.f1(damage.sustained.dps * p)),
+    );
+    const sdpsPie = objToPie(
+      translate,
+      mapValues(portions, (p) => Math.round(damage.sustained.dps * p)),
+    );
 
-    const totalShieldsSDps = sumSDps(shieldsSDpsObject);
-    const totalShieldsSDpsTooltipDetails = getSDpsTooltip(translate, formats, shieldsSDpsObject);
-    const shieldsSDpsData = getSDpsData(translate, shieldsSDpsObject);
+    const shieldSdpsSrcs = mergeWith(
+      clone(portions),
+      shieldMults,
+      (objV, srcV) => damage.sustained.dps * oppShield.absolute.bySys *
+        damage.rangeMultiplier * objV * srcV,
+    );
+    const shieldsSdps = sum(values(shieldSdpsSrcs));
+    const shieldsSdpsTooltip = objToTooltip(
+      translate,
+      mapValues(shieldSdpsSrcs, (v) => formats.f1(v)),
+    );
+    const shieldsSdpsPie = objToPie(
+      translate,
+      mapValues(shieldSdpsSrcs, (v) => Math.round(v)),
+    );
 
-    const totalArmourSDps = sumSDps(armourSDpsObject);
-    const totalArmourSDpsTooltipDetails = getSDpsTooltip(translate, formats, armourSDpsObject);
-    const armourSDpsData = getSDpsData(translate, armourSDpsObject);
+    const armourSdpsSrcs = mergeWith(
+      clone(portions),
+      armourMults,
+      (objV, srcV) => damage.sustained.dps * damage.hardnessMultiplier *
+        damage.rangeMultiplier * objV * srcV,
+    );
+    const armourSdps = sum(values(armourSdpsSrcs));
+    const totalArmourSDpsTooltipDetails = objToTooltip(
+      translate,
+      mapValues(armourSdpsSrcs, (v) => formats.f1(v)),
+    );
+    const armourSDpsData = objToPie(
+      translate,
+      mapValues(armourSdpsSrcs, (v) => Math.round(v)),
+    );
 
-    const timeToDepleteShields = Calc.timeToDeplete(opponentShields.total, totalShieldsSDps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
-    const timeToDepleteArmour = Calc.timeToDeplete(opponentArmour.total, totalArmourSDps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
+    const pd = ship.getPowerDistributor();
+    const timeToDrain = damage.sustained.timeToDrain[ship.getDistributorSettings().Wep];
+    // const timeToDepleteShields = Calc.timeToDeplete(opponentShields.total, shieldsSdps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
+    // const timeToDepleteArmour = Calc.timeToDeplete(opponentArmour.total, armourSdps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
 
     return (
       <span id='offence'>
@@ -270,28 +252,75 @@ export default class Offence extends TranslatedComponent {
           <table>
             <thead>
               <tr className='main'>
-                <th rowSpan='2' className='sortable' onClick={sortOrder.bind(this, 'n')}>{translate('weapon')}</th>
+                <th rowSpan='2' className='sortable' onClick={sortOrder.bind(this, 'classRating')}>{translate('weapon')}</th>
                 <th colSpan='1'>{translate('overall')}</th>
                 <th colSpan='2'>{translate('opponent\'s shields')}</th>
                 <th colSpan='2'>{translate('opponent\'s armour')}</th>
               </tr>
               <tr>
-                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_SHIELDS')} onMouseOut={tooltip.bind(null, null)} onClick={sortOrder.bind(this, 'esdpss')}>{'sdps'}</th>
-                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_SHIELDS')} onMouseOut={tooltip.bind(null, null)} onClick={sortOrder.bind(this, 'esdpss')}>{'sdps'}</th>
-                <th className='sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVENESS_SHIELDS')} onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'es')}>{'eft'}</th>
-                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_ARMOUR')} onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'esdpsh')}>{'sdps'}</th>
-                <th className='sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVENESS_ARMOUR')} onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'eh')}>{'eft'}</th>
+                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_SHIELDS')}
+                  onMouseOut={tooltip.bind(null, null)} onClick={sortOrder.bind(this, 'sdps')}>sdps</th>
+                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_SHIELDS')}
+                  onMouseOut={tooltip.bind(null, null)} onClick={sortOrder.bind(this, 'shieldSdps')}>sdps</th>
+                <th className='sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVENESS_SHIELDS')}
+                  onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'shieldEft')}>eft</th>
+                <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_ARMOUR')}
+                  onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'armourSdps')}>sdps</th>
+                <th className='sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVENESS_ARMOUR')}
+                  onMouseOut={tooltip.bind(null, null)} onClick={sortOrder.bind(this, 'armourEft')}>eft</th>
               </tr>
             </thead>
             <tbody>
-              {rows}
+              {rows.map((row) => (
+                <tr key={row.slot}>
+                  <td className='ri'>
+                    {row.mount == 'F' ? <span onMouseOver={termtip.bind(null, 'fixed')} onMouseOut={tooltip.bind(null, null)}><MountFixed className='icon'/></span> : null}
+                    {row.mount == 'G' ? <span onMouseOver={termtip.bind(null, 'gimballed')} onMouseOut={tooltip.bind(null, null)}><MountGimballed /></span> : null}
+                    {row.mount == 'T' ? <span onMouseOver={termtip.bind(null, 'turreted')} onMouseOut={tooltip.bind(null, null)}><MountTurret /></span> : null}
+                    {row.classRating} {translate(row.type)}
+                    {row.bpTitle}
+                  </td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, row.baseSdpsTooltip)}
+                      onMouseOut={tooltip.bind(null, null)}
+                    >{formats.f1(row.sdps)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, row.shieldsSdpsTooltip)}
+                      onMouseOut={tooltip.bind(null, null)}
+                    >{formats.f1(row.shieldSdps)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, row.shieldsEftTooltip)}
+                      onMouseOut={tooltip.bind(null, null)}
+                    >{formats.pct1(row.shieldEft)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, row.armourSdpsTooltip)}
+                      onMouseOut={tooltip.bind(null, null)}
+                    >{formats.f1(row.armourSdps)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, row.armourEftTooltip)}
+                      onMouseOut={tooltip.bind(null, null)}
+                    >{formats.pct1(row.armourEft)}</span></td>
+                </tr>
+              ))}
               {rows.length > 0 &&
                 <tr>
                   <td></td>
-                  <td className='ri'><span onMouseOver={termtip.bind(null, totalSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>={formats.f1(totalSDps)}</span></td>
-                  <td className='ri'><span onMouseOver={termtip.bind(null, totalShieldsSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>={formats.f1(totalShieldsSDps)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, sdpsTooltip)} onMouseOut={tooltip.bind(null, null)}>
+                      ={formats.f1(damage.sustained.dps)}
+                    </span>
+                  </td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, shieldsSdpsTooltip)} onMouseOut={tooltip.bind(null, null)}>
+                      ={formats.f1(shieldsSdps)}
+                    </span>
+                  </td>
                   <td></td>
-                  <td className='ri'><span onMouseOver={termtip.bind(null, totalArmourSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>={formats.f1(totalArmourSDps)}</span></td>
+                  <td className='ri'>
+                    <span onMouseOver={termtip.bind(null, totalArmourSDpsTooltipDetails)} onMouseOut={tooltip.bind(null, null)}>
+                      ={formats.f1(armourSdps)}
+                    </span>
+                  </td>
                   <td></td>
                 </tr>
               }
@@ -300,22 +329,53 @@ export default class Offence extends TranslatedComponent {
         </div>
         <div className='group quarter'>
           <h2>{translate('offence metrics')}</h2>
-          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_DRAIN_WEP'))} onMouseOut={tooltip.bind(null, null)}>{translate('PHRASE_TIME_TO_DRAIN_WEP')}<br/>{timeToDrain === Infinity ? translate('never') : formats.time(timeToDrain)}</h2>
-          <h2 onMouseOver={termtip.bind(null, translate('TT_EFFECTIVE_SDPS_SHIELDS'))} onMouseOut={tooltip.bind(null, null)}>{translate('PHRASE_EFFECTIVE_SDPS_SHIELDS')}<br/>{formats.f1(totalShieldsSDps)}</h2>
-          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_REMOVE_SHIELDS'))} onMouseOut={tooltip.bind(null, null)}>{translate('PHRASE_TIME_TO_REMOVE_SHIELDS')}<br/>{timeToDepleteShields === Infinity ? translate('never') : formats.time(timeToDepleteShields)}</h2>
-          <h2 onMouseOver={termtip.bind(null, translate('TT_EFFECTIVE_SDPS_ARMOUR'))} onMouseOut={tooltip.bind(null, null)}>{translate('PHRASE_EFFECTIVE_SDPS_ARMOUR')}<br/>{formats.f1(totalArmourSDps)}</h2>
-          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_REMOVE_ARMOUR'))} onMouseOut={tooltip.bind(null, null)}>{translate('PHRASE_TIME_TO_REMOVE_ARMOUR')}<br/>{timeToDepleteArmour === Infinity ? translate('never') : formats.time(timeToDepleteArmour)}</h2>
+          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_DRAIN_WEP'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('PHRASE_TIME_TO_DRAIN_WEP')}<br/>
+            {timeToDrain === Infinity ? translate('never') : formats.time(timeToDrain)}
+          </h2>
+          <h2 onMouseOver={termtip.bind(null, translate('TT_EFFECTIVE_SDPS_SHIELDS'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('PHRASE_EFFECTIVE_SDPS_SHIELDS')}<br/>
+            {formats.f1(shieldsSdps)}
+          </h2>
+          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_REMOVE_SHIELDS'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('PHRASE_TIME_TO_REMOVE_SHIELDS')}<br/>
+            ToDo
+            {/* {timeToDepleteShields === Infinity ? translate('never') : formats.time(timeToDepleteShields)} */}
+          </h2>
+          <h2 onMouseOver={termtip.bind(null, translate('TT_EFFECTIVE_SDPS_ARMOUR'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('PHRASE_EFFECTIVE_SDPS_ARMOUR')}<br/>
+            {formats.f1(armourSdps)}
+          </h2>
+          <h2 onMouseOver={termtip.bind(null, translate('TT_TIME_TO_REMOVE_ARMOUR'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('PHRASE_TIME_TO_REMOVE_ARMOUR')}<br/>
+            ToDo
+            {/* {timeToDepleteArmour === Infinity ? translate('never') : formats.time(timeToDepleteArmour)} */}
+          </h2>
         </div>
         <div className='group quarter'>
-          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_OVERALL_DAMAGE'))} onMouseOut={tooltip.bind(null, null)}>{translate('overall damage')}</h2>
-          <PieChart data={totalSDpsData} />
+          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_OVERALL_DAMAGE'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('overall damage')}
+          </h2>
+          <PieChart data={sdpsPie} />
         </div>
         <div className='group quarter'>
-          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_SHIELD_DAMAGE'))} onMouseOut={tooltip.bind(null, null)}>{translate('shield damage sources')}</h2>
-          <PieChart data={shieldsSDpsData} />
+          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_SHIELD_DAMAGE'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('shield damage sources')}
+          </h2>
+          <PieChart data={shieldsSdpsPie} />
         </div>
         <div className='group quarter'>
-          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_ARMOUR_DAMAGE'))} onMouseOut={tooltip.bind(null, null)}>{translate('armour damage sources')}</h2>
+          <h2 onMouseOver={termtip.bind(null, translate('PHRASE_ARMOUR_DAMAGE'))}
+            onMouseOut={tooltip.bind(null, null)}>
+            {translate('armour damage sources')}
+          </h2>
           <PieChart data={armourSDpsData} />
         </div>
       </span>);
