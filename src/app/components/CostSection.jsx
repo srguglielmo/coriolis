@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import cn from 'classnames';
 import Persist from '../stores/Persist';
-import Ship from '../shipyard/Ship';
+import { Ship } from 'ed-forge';
 import { Insurance } from '../shipyard/Constants';
 import TranslatedComponent from './TranslatedComponent';
 import { ShoppingIcon } from '../components/SvgIcons';
@@ -28,13 +28,14 @@ export default class CostSection extends TranslatedComponent {
     super(props);
     autoBind(this);
 
+    const { ship, buildName } = props;
     this.state = {
-      retrofitName: this._defaultRetrofitName(props.ship, props.buildName),
+      retrofitName: Persist.hasBuild(ship.getShipType(), buildName) ? buildName : null,
       shipDiscount: Persist.getShipDiscount(),
       moduleDiscount: Persist.getModuleDiscount(),
       insurance: Insurance[Persist.getInsurance()],
       tab: Persist.getCostTab(),
-      buildOptions: Persist.getBuildsNamesFor(props.ship.getShipType()),
+      buildOptions: Persist.getBuildsNamesFor(ship.getShipType()),
       predicate: 'cr',
       desc: true,
       excluded: {},
@@ -45,34 +46,14 @@ export default class CostSection extends TranslatedComponent {
    * Create a ship instance to base/reference retrofit changes from
    * @param  {string} ship         Ship
    * @param  {string} name         Build name
-   * @param  {Ship} retrofitShip   Existing retrofit ship
    * @return {Ship}                Retrofit ship
    */
-  _buildRetrofitShip(ship, name, retrofitShip) {
-    // TODO: once ships have been persisted, this can be fixed
+  _buildRetrofitShip(ship, name) {
+    if (Persist.hasBuild(ship.getShipType(), name)) {
+      return new Ship(Persist.getBuild(ship.getShipType(), name));
+    }
+
     return ship;
-    // let data = Ships[shipId];   // Retrieve the basic ship properties, slots and defaults
-
-    // if (!retrofitShip) {  // Don't create a new instance unless needed
-    //   retrofitShip = new Ship(shipId, data.properties, data.slots);  // Create a new Ship for retrofit comparison
-    // }
-
-    // if (Persist.hasBuild(shipId, name)) {
-    //   retrofitShip.buildFrom(Persist.getBuild(shipId, name));  // Populate modules from existing build
-    // } else {
-    //   retrofitShip.buildWith(data.defaults);  // Populate with default components
-    // }
-    // return retrofitShip;
-  }
-
-  /**
-   * Get the default retrofit build name if it exists
-   * @param  {string} ship         Ship
-   * @param  {string} name         Build name
-   * @return {string}              Build name or null
-   */
-  _defaultRetrofitName(ship, name) {
-    return Persist.hasBuild(ship.getShipType(), name) ? name : null;
   }
 
   /**
